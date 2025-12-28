@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/d1";
 import { audits } from "./db/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { v4 as uuidv4 } from 'uuid';
 import { AuditRecord } from "@/lib/schema";
 

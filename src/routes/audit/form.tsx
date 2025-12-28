@@ -174,7 +174,7 @@ function CombinedAuditForm() {
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => window.open('/alerts.pdf', '_blank')}
+                                    onClick={() => window.open('/alerts.png', '_blank')}
                                     className="hidden sm:flex"
                                 >
                                     <FileText className="w-4 h-4 mr-2" /> Guidance
@@ -430,7 +430,7 @@ function CombinedAuditForm() {
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => window.open('/safety.pdf', '_blank')}
+                                    onClick={() => window.open('/safety.png', '_blank')}
                                     className="hidden sm:flex"
                                 >
                                     <FileText className="w-4 h-4 mr-2" /> Guidance

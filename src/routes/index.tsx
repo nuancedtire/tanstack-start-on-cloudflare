@@ -56,7 +56,7 @@ function LandingPage() {
           <AnimatedItem>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               A streamlined, high-precision audit tool for RCEM Standards in Mental Health.
-              Securely track <span className="text-foreground font-semibold">SAFETY</span> and <span className="text-foreground font-semibold">ALERTS</span> protocols with real-time analytics.
+              Securely track <a href="/safety.png" target="_blank" rel="noopener noreferrer" className="text-foreground font-semibold hover:underline decoration-brand-500 underline-offset-4 transition-all">SAFETY</a> and <a href="/alerts.png" target="_blank" rel="noopener noreferrer" className="text-foreground font-semibold hover:underline decoration-brand-500 underline-offset-4 transition-all">ALERTS</a> protocols with real-time analytics.
             </p>
           </AnimatedItem>
 
@@ -74,6 +74,23 @@ function LandingPage() {
                 View Analytics
               </Button>
             </Link>
+          </AnimatedItem>
+
+          <AnimatedItem className="pt-12 grid grid-cols-2 gap-6 max-w-2xl mx-auto">
+            <a href="/safety.png" target="_blank" rel="noopener noreferrer" className="block group relative aspect-[3/4] rounded-xl overflow-hidden border border-border/50 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors z-10" />
+              <img src="/safety.png" alt="Safety Poster" className="w-full h-full object-cover" />
+              <div className="absolute bottom-3 left-3 right-3 bg-white/90 dark:bg-black/90 backdrop-blur-sm px-3 py-2 rounded-lg text-xs font-bold text-center opacity-0 group-hover:opacity-100 transition-opacity z-20 translate-y-2 group-hover:translate-y-0">
+                View Safety Protocol
+              </div>
+            </a>
+            <a href="/alerts.png" target="_blank" rel="noopener noreferrer" className="block group relative aspect-[3/4] rounded-xl overflow-hidden border border-border/50 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors z-10" />
+              <img src="/alerts.png" alt="Alerts Poster" className="w-full h-full object-cover" />
+              <div className="absolute bottom-3 left-3 right-3 bg-white/90 dark:bg-black/90 backdrop-blur-sm px-3 py-2 rounded-lg text-xs font-bold text-center opacity-0 group-hover:opacity-100 transition-opacity z-20 translate-y-2 group-hover:translate-y-0">
+                View ALERTS Protocol
+              </div>
+            </a>
           </AnimatedItem>
 
           {/* Floating UI Elements for decoration */}

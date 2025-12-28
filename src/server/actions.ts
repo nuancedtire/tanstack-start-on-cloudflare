@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
 import { AuditRecordSchema, RiskLevel, ObservationStatus } from "@/lib/schema";
 import { db } from "@/server/db";
 import { differenceInMinutes } from "date-fns";
@@ -20,7 +19,8 @@ const getEnv = () => {
 
 // --- Submit Audit ---
 export const submitAuditFn = createServerFn({ method: "POST" })
-    .handler(async (ctx: any) => {
+    .inputValidator((d: any) => d)
+    .handler(async (ctx) => {
         const { data } = ctx;
         const env = getEnv();
         // Validation: We use partial() because we might be submitting a Combined form
@@ -40,7 +40,8 @@ export const submitAuditFn = createServerFn({ method: "POST" })
 
 // --- Get Patient History ---
 export const getPatientHistoryFn = createServerFn({ method: "POST" })
-    .handler(async (ctx: any) => {
+    .inputValidator((d: { token: string }) => d)
+    .handler(async (ctx) => {
         const { token } = ctx.data || {};
         const env = getEnv();
         const history = await db.getPatientHistory(env, token);
@@ -104,7 +105,8 @@ export const getAllAuditsFn = createServerFn({ method: "GET" })
 
 // --- Update Audit ---
 export const updateAuditFn = createServerFn({ method: "POST" })
-    .handler(async (ctx: any) => {
+    .inputValidator((d: { id: string; data: any }) => d)
+    .handler(async (ctx) => {
         const { data } = ctx;
 
         if (!data?.id || !data?.data) {

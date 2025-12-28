@@ -9,4 +9,7 @@ count.txt
 .tanstack
 .output
 .vinxi
+.wrangler
+.vscode
+.claude
 todos.json
