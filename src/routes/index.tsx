@@ -77,14 +77,14 @@ function LandingPage() {
           </AnimatedItem>
 
           <AnimatedItem className="pt-12 grid grid-cols-2 gap-6 max-w-2xl mx-auto">
-            <a href="/safety.png" target="_blank" rel="noopener noreferrer" className="block group relative aspect-[3/4] rounded-xl overflow-hidden border border-border/50 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+            <a href="/safety.png" target="_blank" rel="noopener noreferrer" className="block group relative aspect-[5/7] rounded-xl overflow-hidden border border-border/50 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors z-10" />
               <img src="/safety.png" alt="Safety Poster" className="w-full h-full object-cover" />
               <div className="absolute bottom-3 left-3 right-3 bg-white/90 dark:bg-black/90 backdrop-blur-sm px-3 py-2 rounded-lg text-xs font-bold text-center opacity-0 group-hover:opacity-100 transition-opacity z-20 translate-y-2 group-hover:translate-y-0">
                 View Safety Protocol
               </div>
             </a>
-            <a href="/alerts.png" target="_blank" rel="noopener noreferrer" className="block group relative aspect-[3/4] rounded-xl overflow-hidden border border-border/50 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+            <a href="/alerts.png" target="_blank" rel="noopener noreferrer" className="block group relative aspect-[5/7] rounded-xl overflow-hidden border border-border/50 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors z-10" />
               <img src="/alerts.png" alt="Alerts Poster" className="w-full h-full object-cover" />
               <div className="absolute bottom-3 left-3 right-3 bg-white/90 dark:bg-black/90 backdrop-blur-sm px-3 py-2 rounded-lg text-xs font-bold text-center opacity-0 group-hover:opacity-100 transition-opacity z-20 translate-y-2 group-hover:translate-y-0">

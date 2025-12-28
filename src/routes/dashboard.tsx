@@ -9,7 +9,6 @@ import {
   Users,
   ArrowUpRight,
   Clock,
-  LayoutDashboard,
   FileBarChart
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -57,9 +56,9 @@ function Dashboard() {
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-3"
           >
-            <div className="bg-gradient-to-br from-brand-500 to-brand-600 rounded-lg p-1.5 shadow-sm">
-              <LayoutDashboard className="h-5 w-5 text-white" />
-            </div>
+            <Link to="/">
+              <img src="/logo512.png" alt="Logo" className="h-8 w-8 rounded-lg shadow-sm" />
+            </Link>
             <h1 className="text-xl font-bold tracking-tight text-foreground">QIP Analytics</h1>
           </MotionDiv>
 

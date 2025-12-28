@@ -12,4 +12,5 @@ count.txt
 .wrangler
 .vscode
 .claude
+.agent
 todos.json
