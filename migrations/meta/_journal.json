@@ -8,6 +8,13 @@
       "when": 1766461985585,
       "tag": "0000_fixed_lethal_legion",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1766890156419,
+      "tag": "0001_plain_starhawk",
+      "breakpoints": true
     }
   ]
 }

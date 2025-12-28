@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { AuditRecordSchema, RiskLevel, ObservationStatus } from "@/lib/schema";
+import { RiskLevel, ObservationStatus } from "@/lib/schema";
 import { db } from "@/server/db";
 import { differenceInMinutes } from "date-fns";
 import { v4 as uuidv4 } from 'uuid';
@@ -20,32 +20,26 @@ const getEnv = () => {
 // --- Submit Audit ---
 export const submitAuditFn = createServerFn({ method: "POST" })
     .inputValidator((d: any) => d)
-    .handler(async (ctx) => {
-        const { data } = ctx;
+    .handler(async ({ data: payload }) => {
         const env = getEnv();
-        // Validation: We use partial() because we might be submitting a Combined form
-        // which includes fields from both partial schemas.
-        // Ideally we should have a Combined Schema, but partial works for flexibility.
-        const parsed = AuditRecordSchema.partial().parse(data);
 
-        if (!parsed.patientToken || !parsed.arrivalDate) {
+        if (!payload || !payload.patientToken || !payload.arrivalDate) {
             throw new Error("Patient Token and Arrival Date are required");
         }
 
-        console.log("Saving Combined Audit Record for:", parsed.patientToken);
-        console.log("Saving Combined Audit Record for:", parsed.patientToken);
-        const result = await db.addAudit(env, parsed as any);
+        console.log("Saving Combined Audit Record for:", payload.patientToken);
+        const result = await db.addAudit(env, payload as any);
         return result;
     });
 
 // --- Get Patient History ---
 export const getPatientHistoryFn = createServerFn({ method: "POST" })
     .inputValidator((d: { token: string }) => d)
-    .handler(async (ctx) => {
-        const { token } = ctx.data || {};
+    .handler(async ({ data }) => {
+        const { token } = data;
         const env = getEnv();
-        const history = await db.getPatientHistory(env, token);
-        return history.map((h: any) => ({
+        const records = await db.getPatientHistory(env, token);
+        return records.map((h: any) => ({
             id: h.id || uuidv4(), // Fallback if old data didn't have UUID
             arrivalDate: h.arrivalDate,
             clinicianSeen: !!h.clinicianSeen,
@@ -106,19 +100,14 @@ export const getAllAuditsFn = createServerFn({ method: "GET" })
 // --- Update Audit ---
 export const updateAuditFn = createServerFn({ method: "POST" })
     .inputValidator((d: { id: string; data: any }) => d)
-    .handler(async (ctx) => {
-        const { data } = ctx;
-
-        if (!data?.id || !data?.data) {
-            throw new Error("Missing ID or Data for update");
-        }
-
+    .handler(async ({ data }) => {
         const { id, data: payload } = data;
         const env = getEnv();
 
-        // Validate
-        const parsed = AuditRecordSchema.partial().parse(payload);
+        if (!id || !payload) {
+            throw new Error("Missing ID or Data for update");
+        }
 
-        const result = await db.updateAudit(env, id, parsed as any);
+        const result = await db.updateAudit(env, id, payload as any);
         return result;
     });

@@ -15,7 +15,8 @@
     "types": [
       "vite/client",
       "@cloudflare/workers-types",
-      "./worker-configuration.d.ts"
+      "./worker-configuration.d.ts",
+      "./cloudflare-test.d.ts"
     ],
     /* Bundler mode */
     "moduleResolution": "bundler",

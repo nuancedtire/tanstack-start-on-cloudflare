@@ -1,0 +1,219 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - button [ref=e6]:
+            - img
+          - generic [ref=e7]:
+            - heading "Combined Clinical Audit" [level=1] [ref=e8]:
+              - img [ref=e9]
+              - text: Combined Clinical Audit
+            - generic [ref=e13]:
+              - generic [ref=e14]: token-t9
+              - generic [ref=e15]: • ALERTS & SAFETY
+        - generic [ref=e16]:
+          - generic [ref=e17]:
+            - img [ref=e18]
+            - text: Arrival Time
+          - generic [ref=e22]:
+            - text: 04:10
+            - generic [ref=e23]: on 28 Dec
+    - main [ref=e24]:
+      - generic [ref=e27]:
+        - generic [ref=e29]:
+          - generic [ref=e32]: Patient Identity
+          - generic [ref=e33]:
+            - generic [ref=e34]:
+              - generic [ref=e35]: Date of Birth
+              - generic [ref=e36]:
+                - generic [ref=e37]:
+                  - textbox "DD/MM/YYYY" [ref=e38]
+                  - generic: DD/MM/YYYY
+                - button [ref=e39]:
+                  - img
+              - paragraph [ref=e40]: Type manually or use the calendar
+            - generic [ref=e41]:
+              - generic [ref=e42]: Gender
+              - combobox [ref=e43]:
+                - generic: Select gender
+                - img
+              - combobox [ref=e44]
+        - generic [ref=e45]:
+          - generic [ref=e46]:
+            - generic [ref=e47]:
+              - img [ref=e49]
+              - generic [ref=e51]:
+                - 'heading "Part 1: Triage Assessment" [level=2] [ref=e52]'
+                - paragraph [ref=e53]: Nurse / Initial Assessment Protocol
+            - generic [ref=e54] [cursor=pointer]:
+              - img "Alerts Guidance" [ref=e55]
+              - img [ref=e57]
+          - generic [ref=e60]:
+            - generic [ref=e63]:
+              - generic [ref=e64]:
+                - img [ref=e66]
+                - text: A - Assess Early
+              - generic [ref=e69]: A
+            - generic [ref=e70]:
+              - generic [ref=e71]:
+                - generic [ref=e72]:
+                  - generic [ref=e73] [cursor=pointer]: MH Triage Started?
+                  - switch "MH Triage Started?" [checked] [ref=e74]
+                  - checkbox [checked]
+                - paragraph [ref=e75]: Was the mental health specific triage initiated?
+              - generic [ref=e76]:
+                - generic [ref=e77]: Time of Triage
+                - textbox [ref=e79]: 10:00
+                - paragraph [ref=e80]:
+                  - text: "Target:"
+                  - generic [ref=e81]: 04:25
+                  - text: (15m from arrival)
+          - generic [ref=e82]:
+            - generic [ref=e85]:
+              - generic [ref=e86]:
+                - img [ref=e88]
+                - text: R - Risk Assessment
+              - generic [ref=e90]: R
+            - radiogroup [ref=e92]:
+              - generic [ref=e93] [cursor=pointer]:
+                - radio "Low Risk No immediate ideation, cooperative." [ref=e94]
+                - radio
+                - generic [ref=e95]: Low Risk
+                - generic [ref=e96]: No immediate ideation, cooperative.
+              - generic [ref=e97] [cursor=pointer]:
+                - radio "Medium Risk Thoughts present, no plan, vulnerable." [active] [ref=e98]
+                - radio
+                - generic [ref=e99]: Medium Risk
+                - generic [ref=e100]: Thoughts present, no plan, vulnerable.
+              - generic [ref=e101] [cursor=pointer]:
+                - radio "High Risk Active plans, intent, means available." [ref=e102]
+                - radio
+                - generic [ref=e103]: High Risk
+                - generic [ref=e104]: Active plans, intent, means available.
+          - generic [ref=e105]:
+            - generic [ref=e108]:
+              - generic [ref=e109]:
+                - img [ref=e111]
+                - text: E & S - Engage & Safeguard
+              - generic [ref=e113]: ES
+            - generic [ref=e114]:
+              - generic [ref=e115]:
+                - generic [ref=e116]: Evidence of Compassionate Care?
+                - paragraph [ref=e117]: Includes offering food/drink, pain relief, and clear explanations.
+                - radiogroup [ref=e118]:
+                  - generic [ref=e119] [cursor=pointer]:
+                    - radio "Yes" [ref=e120]
+                    - radio
+                    - text: "Yes"
+                  - generic [ref=e121] [cursor=pointer]:
+                    - radio "Partial" [ref=e122]
+                    - radio
+                    - text: Partial
+                  - generic [ref=e123] [cursor=pointer]:
+                    - radio "No" [ref=e124]
+                    - radio
+                    - text: "No"
+              - generic [ref=e125]:
+                - img [ref=e126]
+                - generic [ref=e129]:
+                  - generic [ref=e130]:
+                    - generic [ref=e131] [cursor=pointer]: Safeguarding Screening
+                    - switch "Safeguarding Screening" [ref=e132]
+                    - checkbox
+                  - paragraph [ref=e133]: Checks for dependents, abuse history, homelessness, or exploitation.
+        - generic [ref=e134]:
+          - generic [ref=e135]:
+            - generic [ref=e136]:
+              - img [ref=e138]
+              - generic [ref=e150]:
+                - 'heading "Part 2: Clinical Assessment" [level=2] [ref=e151]'
+                - paragraph [ref=e152]: Doctor / Clinician Review Protocol
+            - generic [ref=e153] [cursor=pointer]:
+              - img "Safety Guidance" [ref=e154]
+              - img [ref=e156]
+          - generic [ref=e159]:
+            - generic [ref=e161]:
+              - generic [ref=e162]:
+                - generic [ref=e163]: S.A.F - Risk Assessment
+                - generic [ref=e164]: SAF
+              - generic [ref=e165]: Was a risk assessment documented covering these core areas?
+            - generic [ref=e167]:
+              - generic [ref=e168] [cursor=pointer]:
+                - generic [ref=e169]: S
+                - generic [ref=e170]:
+                  - generic [ref=e171]: Self-Harm Type
+                  - generic [ref=e172]: Method/Type documented
+                - checkbox "S Self-Harm Type Method/Type documented" [ref=e173]
+                - checkbox
+              - generic [ref=e174] [cursor=pointer]:
+                - generic [ref=e175]: A
+                - generic [ref=e176]:
+                  - generic [ref=e177]: Antecedent / Trigger
+                  - generic [ref=e178]: Reasons identified
+                - checkbox "A Antecedent / Trigger Reasons identified" [ref=e179]
+                - checkbox
+              - generic [ref=e180] [cursor=pointer]:
+                - generic [ref=e181]: F
+                - generic [ref=e182]:
+                  - generic [ref=e183]: Future Intent
+                  - generic [ref=e184]: Plans or ongoing intent
+                - checkbox "F Future Intent Plans or ongoing intent" [ref=e185]
+                - checkbox
+          - generic [ref=e186]:
+            - generic [ref=e189]:
+              - generic [ref=e190]: E - Environment / History
+              - generic [ref=e191]: E
+            - generic [ref=e192]:
+              - generic [ref=e193] [cursor=pointer]:
+                - checkbox "Psych & Social History Home situation, employment, safeguarding checks." [ref=e194]
+                - checkbox
+                - generic [ref=e195]:
+                  - generic [ref=e196]: Psych & Social History
+                  - generic [ref=e197]: Home situation, employment, safeguarding checks.
+              - generic [ref=e198] [cursor=pointer]:
+                - checkbox "Drug / Alcohol Use Documented use or absence of use." [ref=e199]
+                - checkbox
+                - generic [ref=e200]:
+                  - generic [ref=e201]: Drug / Alcohol Use
+                  - generic [ref=e202]: Documented use or absence of use.
+          - generic [ref=e203]:
+            - generic [ref=e206]:
+              - generic [ref=e207]: T & Y - Team & Your Actions
+              - generic [ref=e208]: TY
+            - generic [ref=e209]:
+              - generic [ref=e210]:
+                - generic [ref=e211] [cursor=pointer]:
+                  - generic [ref=e212]: Team Communication
+                  - generic [ref=e213]: Liaison referrals, handover details, observation plans.
+                - switch "Team Communication Liaison referrals, handover details, observation plans." [ref=e214]
+                - checkbox
+              - generic [ref=e215]:
+                - generic [ref=e216] [cursor=pointer]:
+                  - text: Capacity Assessment (MCA)
+                  - generic [ref=e217]: Understand, Retain, Weigh, Communicate.
+                - switch "Capacity Assessment (MCA) Understand, Retain, Weigh, Communicate." [ref=e218]
+                - checkbox
+              - generic [ref=e219]:
+                - generic [ref=e220] [cursor=pointer]: Safety Netting & Discharge Plan
+                - switch "Safety Netting & Discharge Plan" [ref=e221]
+                - checkbox
+        - button "Submit Complete Audit" [ref=e223]:
+          - img
+          - text: Submit Complete Audit
+  - generic:
+    - contentinfo:
+      - button "Open TanStack Router Devtools" [ref=e224] [cursor=pointer]:
+        - generic [ref=e225]:
+          - img [ref=e227]
+          - img [ref=e262]
+        - generic [ref=e296]: "-"
+        - generic [ref=e297]: TanStack Router
+  - generic [ref=e298]:
+    - img [ref=e300]
+    - button "Open Tanstack query devtools" [ref=e348] [cursor=pointer]:
+      - img [ref=e349]
+```

@@ -32,6 +32,8 @@ export const AuditRecordSchema = z.object({
     id: z.string().optional(),
     patientToken: z.string().min(1, "Patient Token is required"), // Hashed MRN
     arrivalDate: z.string().datetime(), // ISO String
+    dateOfBirth: z.string().optional(), // ISO Date String
+    gender: z.enum(["Male", "Female", "Other", "Prefer not to say"]).optional(),
 
     // Q1.3 - Triage
     triagePerformed: z.boolean().default(false),

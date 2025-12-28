@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { AuditRecord } from "@/lib/schema";
 
 export const getDb = (env: Env) => {
+    // @ts-ignore
     return drizzle(env.DB, { schema: { audits } });
 };
 

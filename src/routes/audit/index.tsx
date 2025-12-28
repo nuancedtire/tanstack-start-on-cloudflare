@@ -8,11 +8,11 @@ import { CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from 
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, differenceInHours, parseISO } from "date-fns";
-import { CalendarIcon, ShieldCheck, Stethoscope, Search, Info, History } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { CalendarIcon, Search, Info, History } from "lucide-react";
 import { MotionDiv, AnimatedContainer, AnimatedItem, HoverCard } from "@/components/ui/motion";
 import { getPatientHistoryFn } from "@/server/actions";
 import { type AuditRecord } from "@/lib/schema";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/audit/")({
     component: AuditLanding,
@@ -22,14 +22,25 @@ function AuditLanding() {
     const navigate = useNavigate();
     const [mrn, setMrn] = useState("");
     const [arrivalDate, setArrivalDate] = useState<Date | undefined>(new Date());
+    const [arrivalDateText, setArrivalDateText] = useState(format(new Date(), "dd/MM/yyyy"));
+    const [arrivalCalendarMonth, setArrivalCalendarMonth] = useState<Date>(new Date());
     const [isLoading, setIsLoading] = useState(false);
+
+    const maskDate = (value: string) => {
+        const v = value.replace(/\D/g, '').slice(0, 8);
+        if (v.length >= 5) {
+            return `${v.slice(0, 2)}/${v.slice(2, 4)}/${v.slice(4)}`;
+        } else if (v.length >= 3) {
+            return `${v.slice(0, 2)}/${v.slice(2)}`;
+        }
+        return v;
+    };
     const [history, setHistory] = useState<Partial<AuditRecord>[]>([]);
     const [showHistory, setShowHistory] = useState(false);
 
     // Initial check for history
     const checkHistory = async (token: string) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const records = await getPatientHistoryFn({ data: { token } } as any);
+        const records = await getPatientHistoryFn({ data: { token } });
         if (records.length > 0) {
             setHistory(records);
             setShowHistory(true);
@@ -78,12 +89,16 @@ function AuditLanding() {
         <div className="min-h-screen bg-neutral-50 dark:bg-black flex flex-col items-center justify-center p-4 relative overflow-hidden">
             {/* Header Added per Request */}
             <div className="absolute top-0 w-full p-6 flex justify-between items-center z-20 pointer-events-none">
-                <div className="pointer-events-auto flex items-center gap-2 font-bold text-lg tracking-tight">
-                    <div className="bg-brand-600 rounded-lg p-1.5 shadow-lg shadow-brand-500/20">
-                        <ShieldCheck className="h-5 w-5 text-white" />
-                    </div>
-                    <span className="text-foreground">Mental Health QIP</span>
-                </div>
+                <MotionDiv
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex items-center gap-3"
+                >
+                    <Link to="/">
+                        <img src="/logo512.png" alt="Logo" className="h-8 w-8 rounded-lg shadow-sm" />
+                    </Link>
+                    <h1 className="text-xl font-bold tracking-tight text-foreground">Mental Health QIP</h1>
+                </MotionDiv>
                 <Button variant="ghost" className="pointer-events-auto text-muted-foreground hover:text-foreground" onClick={() => window.history.back()}>Back</Button>
             </div>
 
@@ -98,9 +113,9 @@ function AuditLanding() {
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                            className="bg-gradient-to-br from-blue-600 to-indigo-700 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto shadow-xl shadow-blue-500/30"
+                            className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/30"
                         >
-                            <Stethoscope className="text-white w-8 h-8" />
+                            <img src="/logo512.png" alt="Logo" className="h-16 w-16 rounded-lg" />
                         </MotionDiv>
                         <div>
                             <h1 className="text-3xl font-bold tracking-tight text-foreground">
@@ -131,6 +146,7 @@ function AuditLanding() {
                                     <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                                     <Input
                                         id="mrn"
+                                        data-testid="mrn-input"
                                         placeholder="Search or enter MRN..."
                                         value={mrn}
                                         onChange={(e) => setMrn(e.target.value)}
@@ -164,64 +180,95 @@ function AuditLanding() {
                                 </MotionDiv>
                             )}
 
-                            <div className="space-y-2 flex flex-col">
+                            <div className="space-y-4 flex flex-col pt-2">
                                 <Label className="text-sm font-semibold text-foreground flex items-center justify-between">
                                     <span>Arrival Date & Time</span>
-                                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full">New Entry</span>
+                                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full">Required</span>
                                 </Label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant={"outline"}
-                                            className={cn(
-                                                "w-full h-12 pl-3 text-left font-normal border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all",
-                                                !arrivalDate && "text-muted-foreground"
-                                            )}
-                                        >
-                                            {arrivalDate ? (
-                                                <span className="text-lg font-mono text-foreground tracking-tight">
-                                                    {format(arrivalDate, "HH:mm")} <span className="text-sm text-muted-foreground font-sans ml-1 opacity-70">{format(arrivalDate, "PPP")}</span>
-                                                </span>
-                                            ) : (
-                                                <span>Pick arrival time...</span>
-                                            )}
-                                            <CalendarIcon className="ml-auto h-5 w-5 opacity-50" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0 border-none shadow-2xl rounded-xl overflow-hidden" align="start">
-                                        <div className="bg-card border border-border rounded-xl">
-                                            <Calendar
-                                                mode="single"
-                                                selected={arrivalDate}
-                                                onSelect={setArrivalDate}
-                                                disabled={(date) =>
-                                                    date > new Date() || date < new Date("1900-01-01")
-                                                }
-                                                initialFocus
-                                                className="p-3"
-                                            />
-                                            <div className="p-4 border-t border-border bg-muted/20 grid gap-2">
-                                                <Label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Exact Arrival Time</Label>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div className="space-y-1.5 flex-1">
+                                        <Label className="text-[10px] uppercase text-muted-foreground ml-1">Arrival Date (DD/MM/YYYY)</Label>
+                                        <div className="flex gap-2">
+                                            <div className="relative flex-1">
                                                 <Input
-                                                    type="time"
-                                                    className="h-10 text-lg font-mono bg-background"
-                                                    defaultValue={arrivalDate ? format(arrivalDate, "HH:mm") : ""}
+                                                    type="text"
+                                                    placeholder="DD/MM/YYYY"
+                                                    className="h-12 text-lg font-mono bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 focus:ring-2 ring-blue-500/20 transition-all"
+                                                    value={arrivalDateText}
                                                     onChange={(e) => {
-                                                        if (arrivalDate && e.target.value) {
-                                                            const [h, m] = e.target.value.split(':').map(Number);
-                                                            const newDate = new Date(arrivalDate);
-                                                            newDate.setHours(h, m);
-                                                            setArrivalDate(newDate);
+                                                        const masked = maskDate(e.target.value);
+                                                        setArrivalDateText(masked);
+                                                        if (masked.length === 10) {
+                                                            const parts = masked.split("/");
+                                                            if (parts.length === 3) {
+                                                                const d = parseInt(parts[0]);
+                                                                const m = parseInt(parts[1]) - 1;
+                                                                const y = parseInt(parts[2]);
+                                                                const current = arrivalDate || new Date();
+                                                                const newDate = new Date(y, m, d, current.getHours(), current.getMinutes());
+                                                                if (!isNaN(newDate.getTime())) {
+                                                                    setArrivalDate(newDate);
+                                                                    setArrivalCalendarMonth(newDate);
+                                                                }
+                                                            }
                                                         }
                                                     }}
                                                 />
                                             </div>
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <Button variant="outline" size="icon" className="h-12 w-12 shrink-0 bg-neutral-50 dark:bg-neutral-900" onClick={() => {
+                                                        if (arrivalDate) setArrivalCalendarMonth(arrivalDate);
+                                                    }}>
+                                                        <CalendarIcon className="h-5 w-5 opacity-60" />
+                                                    </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0 border-none shadow-2xl rounded-xl" align="end">
+                                                    <Calendar
+                                                        mode="single"
+                                                        selected={arrivalDate}
+                                                        month={arrivalCalendarMonth}
+                                                        onMonthChange={setArrivalCalendarMonth}
+                                                        onSelect={(date) => {
+                                                            if (date) {
+                                                                const current = arrivalDate || new Date();
+                                                                date.setHours(current.getHours(), current.getMinutes());
+                                                                setArrivalDate(date);
+                                                                setArrivalDateText(format(date, "dd/MM/yyyy"));
+                                                                setArrivalCalendarMonth(date);
+                                                            }
+                                                        }}
+                                                        captionLayout="dropdown"
+                                                        disabled={(date) => date > new Date()}
+                                                        initialFocus
+                                                    />
+                                                </PopoverContent>
+                                            </Popover>
                                         </div>
-                                    </PopoverContent>
-                                </Popover>
-                                <div className="flex gap-2 items-start mt-1 p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs">
+                                    </div>
+
+                                    <div className="space-y-1.5 flex-1">
+                                        <Label className="text-[10px] uppercase text-muted-foreground ml-1">Arrival Time</Label>
+                                        <Input
+                                            type="time"
+                                            className="h-12 text-lg font-mono bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 focus:ring-2 ring-blue-500/20 transition-all font-mono"
+                                            value={arrivalDate ? format(arrivalDate, "HH:mm") : ""}
+                                            onChange={(e) => {
+                                                if (arrivalDate && e.target.value) {
+                                                    const [h, m] = e.target.value.split(':').map(Number);
+                                                    const newDate = new Date(arrivalDate);
+                                                    newDate.setHours(h, m);
+                                                    setArrivalDate(newDate);
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2 items-start p-2.5 rounded-xl bg-blue-50/50 dark:bg-blue-900/10 text-blue-700 dark:text-blue-300 text-xs border border-blue-100/50 dark:border-blue-900/20">
                                     <Info className="w-4 h-4 shrink-0 mt-0.5" />
-                                    <p>Please use exact <strong>EPR Arrival Time</strong>.</p>
+                                    <p>Enter the <strong>Official Arrival Time</strong> from EPR/Symphony to ensure audit accuracy.</p>
                                 </div>
                             </div>
                         </CardContent>
@@ -230,6 +277,7 @@ function AuditLanding() {
                                 className="w-full h-14 text-base font-semibold bg-brand-600 hover:bg-brand-700 text-white shadow-lg shadow-brand-500/20 rounded-xl transition-all hover:scale-[1.01]"
                                 disabled={!mrn || isLoading}
                                 onClick={handleStartNew}
+                                data-testid="start-audit-button"
                             >
                                 Start Audit
                             </Button>

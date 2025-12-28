@@ -5,6 +5,8 @@ export const audits = sqliteTable("audits", {
     id: text("id").primaryKey(),
     patientToken: text("patient_token").notNull(),
     arrivalDate: text("arrival_date").notNull(),
+    dateOfBirth: text("date_of_birth"),
+    gender: text("gender"),
 
     // Q1.3 - Triage
     triagePerformed: integer("triage_performed", { mode: "boolean" }).default(false),

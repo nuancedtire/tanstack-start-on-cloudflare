@@ -1,4 +1,4 @@
-
+import { useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { format, addDays, isBefore } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -20,8 +20,21 @@ import {
     Eye,
     Heart,
     ShieldCheck,
-    FileText
+    CalendarIcon
 } from "lucide-react";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
 import { RiskLevel, ObservationStatus, AuditRecord } from "@/lib/schema";
 import { submitAuditFn, updateAuditFn } from "@/server/actions";
 import { MotionDiv, AnimatedContainer, AnimatedItem, HoverCard } from "@/components/ui/motion";
@@ -36,6 +49,20 @@ interface AuditFormProps {
 
 export function AuditForm({ initialData, token, arrival, onSuccess, mode = "create" }: AuditFormProps) {
     const arrivalDate = new Date(arrival);
+
+    // Local state for DOB text input to allow fluid typing
+    const [dobText, setDobText] = useState(initialData?.dateOfBirth ? format(new Date(initialData.dateOfBirth), "dd/MM/yyyy") : "");
+    const [dobCalendarMonth, setDobCalendarMonth] = useState<Date>(initialData?.dateOfBirth ? new Date(initialData.dateOfBirth) : new Date());
+
+    const maskDate = (value: string) => {
+        const v = value.replace(/\D/g, '').slice(0, 8);
+        if (v.length >= 5) {
+            return `${v.slice(0, 2)}/${v.slice(2, 4)}/${v.slice(4)}`;
+        } else if (v.length >= 3) {
+            return `${v.slice(0, 2)}/${v.slice(2)}`;
+        }
+        return v;
+    };
 
     const submissionHandler = async (value: any) => {
         try {
@@ -64,6 +91,10 @@ export function AuditForm({ initialData, token, arrival, onSuccess, mode = "crea
                 historyStatus = "Adequate";
             } else if (val.environmentSocial || val.environmentAlcohol) {
                 historyStatus = "Partial";
+            }
+
+            if (val.dateOfBirth instanceof Date) {
+                val.dateOfBirth = val.dateOfBirth.toISOString();
             }
 
             const payload = {
@@ -99,6 +130,8 @@ export function AuditForm({ initialData, token, arrival, onSuccess, mode = "crea
         defaultValues: {
             triagePerformed: initialData?.triagePerformed ?? true,
             triageTime: initialData?.triageTime ? format(new Date(initialData.triageTime), "HH:mm") : format(new Date(), "HH:mm"),
+            dateOfBirth: initialData?.dateOfBirth ? new Date(initialData.dateOfBirth) : undefined,
+            gender: initialData?.gender,
             riskLevel: initialData?.riskLevel as RiskLevel | undefined,
             observationLevelMet: initialData?.observationLevelMet as ObservationStatus | undefined,
             compassionateCare: initialData?.compassionateCare as "Yes" | "Partial" | "No" | undefined,
@@ -138,6 +171,117 @@ export function AuditForm({ initialData, token, arrival, onSuccess, mode = "crea
             >
                 <AnimatedContainer className="space-y-8">
 
+
+                    {/* SECTION 0: PATIENT IDENTITY */}
+                    <AnimatedItem>
+                        <HoverCard className="group premium-card border-none ring-1 ring-border shadow-sm mb-6">
+                            <div className="absolute top-0 left-0 w-1.5 h-full bg-slate-500" />
+                            <CardHeader className="pb-4">
+                                <CardTitle className="text-xl flex items-center gap-3">
+                                    Patient Identity
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="grid sm:grid-cols-2 gap-6">
+                                <form.Field
+                                    name="dateOfBirth"
+                                    children={(field) => (
+                                        <div className="space-y-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-border/50">
+                                            <Label className="font-semibold">Date of Birth</Label>
+                                            <div className="flex gap-2">
+                                                <div className="relative flex-1">
+                                                    <Input
+                                                        type="text"
+                                                        placeholder="DD/MM/YYYY"
+                                                        className="bg-white dark:bg-black pr-10"
+                                                        value={dobText}
+                                                        onChange={(e) => {
+                                                            const masked = maskDate(e.target.value);
+                                                            setDobText(masked);
+                                                            // If it looks like a full date, try to parse it
+                                                            if (masked.length === 10) {
+                                                                const parts = masked.split("/");
+                                                                if (parts.length === 3) {
+                                                                    const d = parseInt(parts[0]);
+                                                                    const m = parseInt(parts[1]) - 1;
+                                                                    const y = parseInt(parts[2]);
+                                                                    const newDate = new Date(y, m, d);
+                                                                    if (!isNaN(newDate.getTime())) {
+                                                                        field.handleChange(newDate);
+                                                                        setDobCalendarMonth(newDate);
+                                                                    }
+                                                                }
+                                                            }
+                                                        }}
+                                                    />
+                                                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-muted-foreground/50 text-xs">
+                                                        DD/MM/YYYY
+                                                    </div>
+                                                </div>
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="icon"
+                                                            className="shrink-0 bg-white dark:bg-black"
+                                                            onClick={() => {
+                                                                if (field.state.value) setDobCalendarMonth(field.state.value);
+                                                            }}
+                                                        >
+                                                            <CalendarIcon className="h-4 w-4" />
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0" align="end">
+                                                        <Calendar
+                                                            mode="single"
+                                                            selected={field.state.value}
+                                                            month={dobCalendarMonth}
+                                                            onMonthChange={setDobCalendarMonth}
+                                                            onSelect={(date) => {
+                                                                field.handleChange(date);
+                                                                if (date) {
+                                                                    setDobText(format(date, "dd/MM/yyyy"));
+                                                                    setDobCalendarMonth(date);
+                                                                }
+                                                            }}
+                                                            captionLayout="dropdown"
+                                                            disabled={(date) =>
+                                                                date > new Date() || date < new Date("1900-01-01")
+                                                            }
+                                                            initialFocus
+                                                        />
+                                                    </PopoverContent>
+                                                </Popover>
+                                            </div>
+                                            <p className="text-[10px] text-muted-foreground">Type manually or use the calendar</p>
+                                        </div>
+                                    )}
+                                />
+                                <form.Field
+                                    name="gender"
+                                    children={(field) => (
+                                        <div className="space-y-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-border/50">
+                                            <Label className="font-semibold">Gender</Label>
+                                            <Select
+                                                onValueChange={(val) => field.handleChange(val as any)}
+                                                defaultValue={field.state.value}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select gender" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Male">Male</SelectItem>
+                                                    <SelectItem value="Female">Female</SelectItem>
+                                                    <SelectItem value="Other">Other</SelectItem>
+                                                    <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
+                                />
+                            </CardContent>
+                        </HoverCard>
+                    </AnimatedItem>
+
                     {/* SECTION 1: TRIAGE (ALERTS) */}
                     <AnimatedItem>
                         <div className="flex items-center justify-between mb-6">
@@ -148,15 +292,15 @@ export function AuditForm({ initialData, token, arrival, onSuccess, mode = "crea
                                     <p className="text-muted-foreground text-sm">Nurse / Initial Assessment Protocol</p>
                                 </div>
                             </div>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
+                            <div
+                                className="hidden sm:block relative group cursor-pointer overflow-hidden rounded-xs border-2 border-emerald-100 shadow-sm aspect-[5/7] w-20 transition-all hover:ring-2 hover:ring-emerald-500 hover:shadow-md"
                                 onClick={() => window.open('/alerts.png', '_blank')}
-                                className="hidden sm:flex"
                             >
-                                <FileText className="w-4 h-4 mr-2" /> Guidance
-                            </Button>
+                                <img src="/alerts.png" alt="Alerts Guidance" className="object-cover w-full h-full" />
+                                <div className="absolute inset-0 bg-emerald-600/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                    <Eye className="w-6 h-6 text-emerald-900 drop-shadow-sm" />
+                                </div>
+                            </div>
                         </div>
 
                         {/* A - Assess Early */}
@@ -404,15 +548,15 @@ export function AuditForm({ initialData, token, arrival, onSuccess, mode = "crea
                                     <p className="text-muted-foreground text-sm">Doctor / Clinician Review Protocol</p>
                                 </div>
                             </div>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
+                            <div
+                                className="hidden sm:block relative group cursor-pointer overflow-hidden rounded-xs border-2 border-blue-100 shadow-sm aspect-[5/7] w-20 transition-all hover:ring-2 hover:ring-blue-500 hover:shadow-md"
                                 onClick={() => window.open('/safety.png', '_blank')}
-                                className="hidden sm:flex"
                             >
-                                <FileText className="w-4 h-4 mr-2" /> Guidance
-                            </Button>
+                                <img src="/safety.png" alt="Safety Guidance" className="object-cover w-full h-full" />
+                                <div className="absolute inset-0 bg-blue-600/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                    <Eye className="w-6 h-6 text-blue-900 drop-shadow-sm" />
+                                </div>
+                            </div>
                         </div>
 
                         <HoverCard className="group premium-card border-none ring-1 ring-border shadow-sm mb-6">
