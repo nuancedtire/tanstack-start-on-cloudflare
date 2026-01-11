@@ -31,6 +31,7 @@ export const AuditRecordSchema = z.object({
     // Identity & Generic (Pseudo-anonymized)
     id: z.string().optional(),
     patientToken: z.string().min(1, "Patient Token is required"), // Hashed MRN
+    patientTokenEncrypted: z.string().optional(), // Encrypted MRN (AES-GCM)
     arrivalDate: z.string().datetime(), // ISO String
     dateOfBirth: z.string().optional(), // ISO Date String
     gender: z.enum(["Male", "Female", "Not Known"]).optional(),

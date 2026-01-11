@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { useState } from "react";
 import { hashMRN } from "@/utils/hash-mrn";
+import { decryptWithPin } from "@/utils/encryption";
 import { PinProtection } from "@/components/pin-protection";
 
 export const Route = createFileRoute("/data")({
@@ -52,6 +53,21 @@ function DataView() {
         setPinTitle(title);
         setPinDesc(desc);
         setShowPin(true);
+    };
+
+    const [unlockedMrns, setUnlockedMrns] = useState<Record<string, string>>({});
+
+    const handleUnlock = (id: string, encrypted: string) => {
+        handleProtectedAction(async () => {
+            try {
+                // Hardcoded PIN matches the one in PinProtection component for now
+                const decrypted = await decryptWithPin(encrypted, "0000");
+                setUnlockedMrns(prev => ({ ...prev, [id]: decrypted }));
+            } catch (e) {
+                console.error(e);
+                alert("Failed to decrypt. Data might be corrupted.");
+            }
+        }, "Unlock MRN", "Enter PIN to decrypt Patient ID.");
     };
 
     const deleteMutation = useMutation({
@@ -187,7 +203,30 @@ function DataView() {
                                             return (
                                                 <TableRow key={audit.id || i} className="hover:bg-muted/30 border-b border-border/50 transition-colors h-16 group">
                                                     <TableCell className="pl-6 font-mono text-xs text-muted-foreground">
-                                                        {audit.patientToken.substring(0, 8)}...
+                                                        {unlockedMrns[audit.id!] ? (
+                                                            <span className="text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded border border-emerald-200 dark:border-emerald-800">
+                                                                {unlockedMrns[audit.id!]}
+                                                            </span>
+                                                        ) : (
+                                                            <div className="flex items-center gap-2">
+                                                                <span>{audit.patientToken.substring(0, 8)}...</span>
+                                                                {/* @ts-ignore - Schema update might strictly require rebuild for types */}
+                                                                {audit.patientTokenEncrypted && (
+                                                                    <Button 
+                                                                        variant="ghost" 
+                                                                        size="icon" 
+                                                                        className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            // @ts-ignore
+                                                                            if (audit.id) handleUnlock(audit.id, audit.patientTokenEncrypted);
+                                                                        }}
+                                                                    >
+                                                                        <Lock className="w-3 h-3" />
+                                                                    </Button>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </TableCell>
                                                     <TableCell className="text-muted-foreground text-sm">
                                                         {format(date, "MMM dd, HH:mm")}

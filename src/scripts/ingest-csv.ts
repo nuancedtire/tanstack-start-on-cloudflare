@@ -2,6 +2,7 @@
 import { RiskLevel, ObservationStatus } from "@/lib/schema";
 import { parse } from "date-fns";
 import { hashMRN } from "@/utils/hash-mrn";
+import { encryptWithPin } from "@/utils/encryption";
 
 export async function parseAndSeedFromCsv(csvUrl: string): Promise<any[]> {
     try {
@@ -75,9 +76,12 @@ export async function parseAndSeedFromCsv(csvUrl: string): Promise<any[]> {
 
             // Secure Hash for Token
             const token = row['reference'] ? await hashMRN(row['reference']) : 'UNKNOWN';
+            // Also store encrypted token for "unlock" feature (using default PIN 0000)
+            const encryptedToken = row['reference'] ? await encryptWithPin(row['reference'], "0000") : undefined;
 
             return {
                 patientToken: token, 
+                patientTokenEncrypted: encryptedToken,
                 arrivalDate: arrivalDate || new Date().toISOString(),
                 triageTime: triageTime,
                 triagePerformed: !!triageTime, // Assume performed if time recorded

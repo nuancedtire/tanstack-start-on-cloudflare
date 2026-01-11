@@ -1,6 +1,7 @@
 import { useNavigate, createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { hashMRN } from "@/utils/hash-mrn";
+import { encryptWithPin } from "@/utils/encryption";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,6 +59,7 @@ function AuditLanding() {
     const handleStartNew = async () => {
         if (!mrn || !arrivalDate) return;
         const token = await hashMRN(mrn);
+        const encrypted = await encryptWithPin(mrn, "0000");
 
         // Multi-entry handling: Warning only
         const nearbyRecord = history.find(h => {
@@ -79,11 +81,13 @@ function AuditLanding() {
             to: "/audit/form",
             search: {
                 token,
+                encrypted,
                 arrival: arrivalDate.toISOString(),
             },
         });
         setIsLoading(false);
     };
+
 
     return (
         <div className="min-h-screen bg-neutral-50 dark:bg-black flex flex-col items-center justify-center p-4 relative overflow-hidden">

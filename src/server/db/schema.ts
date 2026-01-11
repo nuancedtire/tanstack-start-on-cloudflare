@@ -4,6 +4,7 @@ import { sql } from "drizzle-orm";
 export const audits = sqliteTable("audits", {
     id: text("id").primaryKey(),
     patientToken: text("patient_token").notNull(),
+    patientTokenEncrypted: text("patient_token_encrypted"),
     arrivalDate: text("arrival_date").notNull(),
     dateOfBirth: text("date_of_birth"),
     gender: text("gender"),

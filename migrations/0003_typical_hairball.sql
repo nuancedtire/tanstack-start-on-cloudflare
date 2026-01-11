@@ -1,0 +1,1 @@
+ALTER TABLE `audits` ADD `patient_token_encrypted` text;

@@ -43,12 +43,13 @@ import { MotionDiv, AnimatedContainer, AnimatedItem, HoverCard } from "@/compone
 interface AuditFormProps {
     initialData?: Partial<AuditRecord>;
     token: string;
+    encryptedToken?: string;
     arrival: string; // ISO String
     onSuccess?: (data: any) => void;
     mode?: "create" | "edit";
 }
 
-export function AuditForm({ initialData, token, arrival, onSuccess, mode = "create" }: AuditFormProps) {
+export function AuditForm({ initialData, token, encryptedToken, arrival, onSuccess, mode = "create" }: AuditFormProps) {
     const queryClient = useQueryClient();
     const arrivalDate = new Date(arrival);
 
@@ -115,6 +116,7 @@ export function AuditForm({ initialData, token, arrival, onSuccess, mode = "crea
             const payload = {
                 ...cleanValues,
                 patientToken: token,
+                patientTokenEncrypted: encryptedToken,
                 arrivalDate: arrival,
                 triageTime: formattedTriageTime,
                 

@@ -14,6 +14,7 @@ import { AuditForm } from "@/components/audit-form";
 const auditSearchSchema = z.object({
     token: z.string(),
     arrival: z.string(),
+    encrypted: z.string().optional(),
 });
 
 export const Route = createFileRoute("/audit/form")({
@@ -22,7 +23,7 @@ export const Route = createFileRoute("/audit/form")({
 });
 
 function CombinedAuditForm() {
-    const { token, arrival } = useSearch({ from: "/audit/form" });
+    const { token, arrival, encrypted } = useSearch({ from: "/audit/form" });
     const navigate = useNavigate();
     const arrivalDate = new Date(arrival);
 
@@ -60,6 +61,7 @@ function CombinedAuditForm() {
             <main className="max-w-4xl mx-auto p-4 sm:p-6 mt-4">
                 <AuditForm
                     token={token}
+                    encryptedToken={encrypted}
                     arrival={arrival}
                     onSuccess={() => navigate({ to: "/dashboard" })}
                     mode="create"
