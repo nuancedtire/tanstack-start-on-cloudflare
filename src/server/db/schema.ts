@@ -32,6 +32,7 @@ export const audits = sqliteTable("audits", {
 
     // SAFETY - Standard 3
     clinicianSeen: integer("clinician_seen", { mode: "boolean" }).default(false),
+    clinicianSeenTime: text("clinician_seen_time"),
 
     // Q2.2 - Risk Assessment Elements
     riskAssessmentType: integer("risk_assessment_type", { mode: "boolean" }).default(false),
@@ -54,6 +55,7 @@ export const audits = sqliteTable("audits", {
 
     // Outcomes
     referredToPsych: integer("referred_to_psych", { mode: "boolean" }).default(false),
+    psychReferralTime: text("psych_referral_time"),
     psychReviewTime: text("psych_review_time"),
     parallelAssessment: integer("parallel_assessment", { mode: "boolean" }).default(false),
     departureTime: text("departure_time"),

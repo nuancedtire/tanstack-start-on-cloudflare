@@ -5,7 +5,7 @@
  * without storing PII (Personally Identifiable Information).
  */
 export async function hashMRN(mrn: string): Promise<string> {
-    const SALT = "Barts-Health-QIP-2025-Secret-Salt"; // In production, this should be an env var
+    const SALT = import.meta.env.VITE_MRN_SALT || "FALLBACK_DEV_SALT"; 
     const encoder = new TextEncoder();
     const data = encoder.encode(mrn + SALT);
 

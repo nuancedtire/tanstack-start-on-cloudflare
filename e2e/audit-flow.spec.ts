@@ -16,8 +16,11 @@ test.describe('Audit Ecosystem', () => {
         await page.getByText('Medium Risk', { exact: true }).click();
 
         // Wait for conditional observation buttons
-        await page.waitForTimeout(1000); // Wait for MotionDiv animation
-        await page.locator('button').filter({ hasText: /^Yes$/ }).first().click();
+        // Wait for conditional observation buttons to appear
+        const observationYes = page.locator('button').filter({ hasText: /^Yes$/ }).first();
+        await page.waitForTimeout(200); // Stabilization for animation/state
+        await expect(observationYes).toBeVisible();
+        await observationYes.click();
 
         // Compassionate care "Yes"
         await page.locator('button').filter({ hasText: /^Yes$/ }).last().click();

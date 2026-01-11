@@ -33,7 +33,7 @@ export const AuditRecordSchema = z.object({
     patientToken: z.string().min(1, "Patient Token is required"), // Hashed MRN
     arrivalDate: z.string().datetime(), // ISO String
     dateOfBirth: z.string().optional(), // ISO Date String
-    gender: z.enum(["Male", "Female", "Other", "Prefer not to say"]).optional(),
+    gender: z.enum(["Male", "Female", "Not Known"]).optional(),
 
     // Q1.3 - Triage
     triagePerformed: z.boolean().default(false),
@@ -61,6 +61,7 @@ export const AuditRecordSchema = z.object({
     // SAFETY (Clinician) - Standard 3
     // Q1.5
     clinicianSeen: z.boolean().default(false),
+    clinicianSeenTime: z.string().datetime().nullable().optional(),
 
     // Q2.2 - Risk Assessment Elements
     riskAssessmentType: z.boolean().default(false),      // A. Type of self-harm
@@ -84,6 +85,7 @@ export const AuditRecordSchema = z.object({
     // Outcomes & Liaison
     // Q1.6
     referredToPsych: z.boolean().default(false),
+    psychReferralTime: z.string().datetime().nullable().optional(),
 
     // Q1.7.2
     psychReviewTime: z.string().datetime().nullable().optional(),

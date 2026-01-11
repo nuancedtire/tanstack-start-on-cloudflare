@@ -111,3 +111,56 @@ export const updateAuditFn = createServerFn({ method: "POST" })
         const result = await db.updateAudit(env, id, payload as any);
         return result;
     });
+
+// --- Delete Audit ---
+export const deleteAuditFn = createServerFn({ method: "POST" })
+    .inputValidator((d: { id: string }) => d)
+    .handler(async ({ data }) => {
+        const { id } = data;
+        const env = getEnv();
+
+        if (!id) {
+            throw new Error("Missing ID for deletion");
+        }
+
+        console.log("Deleting audit:", id);
+        const result = await db.deleteAudit(env, id);
+
+        if (!result) {
+            throw new Error("Audit not found");
+        }
+
+        return { success: true, id };
+    });
+
+// --- Reset and Seed (Development Only) ---
+export const resetAndSeedFn = createServerFn({ method: "POST" })
+    .inputValidator((d: { records: any[] }) => d)
+    .handler(async ({ data }) => {
+        const { records } = data;
+        const env = getEnv();
+
+        console.log(`Starting reset and seed with ${records.length} records...`);
+
+        // Reset DB
+        // @ts-ignore - db.reset might not be typed in current environment but it exists in db.ts
+        if (db.reset) {
+            await db.reset(env);
+        } else {
+            // Fallback: Delete all one by one (inefficient but works)
+            const all = await db.getAllAudits(env);
+            for (const a of all) {
+                await db.deleteAudit(env, a.id);
+            }
+        }
+
+        // Insert new records
+        // D1 limit is usually high enough, but sequential is safer for now
+        let count = 0;
+        for (const record of records) {
+            await db.addAudit(env, record);
+            count++;
+        }
+
+        return { success: true, count };
+    });

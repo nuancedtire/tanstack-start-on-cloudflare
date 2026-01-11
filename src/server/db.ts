@@ -103,6 +103,15 @@ export const db = {
         return result;
     },
 
+    deleteAudit: async (env: Env, id: string) => {
+        const d1 = getDb(env);
+        const result = await d1.delete(audits)
+            .where(eq(audits.id, id))
+            .returning()
+            .get();
+        return result;
+    },
+
     // Helper to clear DB (mostly for tests or dev reset)
     reset: async (env: Env) => {
         const d1 = getDb(env);

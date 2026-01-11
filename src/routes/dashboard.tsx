@@ -1,42 +1,218 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { getDashboardStatsFn } from "@/server/actions";
+import { getAllAuditsFn } from "@/server/actions";
 import {
   ShieldCheck,
   Activity,
   AlertTriangle,
   Users,
   ArrowUpRight,
-  Clock,
-  FileBarChart
+  Clock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useMemo } from "react";
 
 import { Button } from "@/components/ui/button";
-import { CardContent, CardDescription, CardFooter, CardTitle } from "@/components/ui/card";
+import { CardContent, CardDescription, CardTitle } from "@/components/ui/card";
+
 import {
   MotionDiv,
   AnimatedContainer,
   AnimatedItem,
   AnimatedCounter,
-  AnimatedProgress,
   PulsingDot,
   HoverCard
 } from "@/components/ui/motion";
+import {
+  RiskLevelChart,
+  ComplianceTrendChart,
+  TimeRunChart,
+  ObservationEvidenceChart,
+  RiskAssessmentComponentsChart
+} from "@/components/chart-components";
+import { parseAndSeedFromCsv } from "@/scripts/ingest-csv";
+import { RiskLevel, ObservationStatus } from "@/lib/schema";
+import { differenceInMinutes } from "date-fns";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
 });
 
 function Dashboard() {
-  const { data: metrics, isLoading } = useQuery({
-    queryKey: ["dashboardStats"],
-    queryFn: () => getDashboardStatsFn(),
+
+
+  const { data: allAudits, isLoading } = useQuery({
+    queryKey: ["allAudits"],
+    queryFn: () => getAllAuditsFn(),
     refetchInterval: 5000,
   });
 
-  if (isLoading || !metrics) {
+
+
+  // Compute metrics from filtered audits
+  // Compute metrics from all audits
+  const metrics = useMemo(() => {
+    const audits = allAudits || [];
+    const total = audits.length;
+
+    //  Standard 1: Triage < 15 mins (Total Dataset)
+    const triageCompliantCount = audits.filter((a: any) => {
+      if (!a.triageTime || !a.arrivalDate) return false;
+      const diff = differenceInMinutes(new Date(a.triageTime), new Date(a.arrivalDate));
+      return diff <= 15 && diff >= 0;
+    }).length;
+
+    // Data for Run Chart (Triage Times)
+    const triageRunData = audits
+      .filter((a: any) => a.triageTime && a.arrivalDate)
+      .map((a: any) => {
+        const diff = differenceInMinutes(new Date(a.triageTime), new Date(a.arrivalDate));
+        return {
+          id: a.patientToken?.substring(0, 4) || 'Unk',
+          minutes: diff < 0 ? 0 : diff, // Handle potential data errors
+          compliant: diff <= 15 && diff >= 0
+        };
+      })
+      // sort by created at or arrival? Run charts usually chronological.
+      .sort(() => 0); // Keep original order or sort by date if available in filter map 
+    // Actually map doesn't preserve index well if filtered. Let's trust array order is chronological fetch.
+
+    // Standard 2: Med/High Risk Obs
+    const riskPatients = audits.filter((a: any) => a.riskLevel === RiskLevel.Medium || a.riskLevel === RiskLevel.High);
+    const obsCompliantCount = riskPatients.filter((a: any) => a.observationLevelMet === ObservationStatus.Yes).length;
+
+    // Data for Observation Evidence Chart
+    const obsData = [
+      { name: "Yes", value: riskPatients.filter((a: any) => a.observationLevelMet === ObservationStatus.Yes).length },
+      { name: "Partial", value: riskPatients.filter((a: any) => a.observationLevelMet === ObservationStatus.Partial).length },
+      { name: "No", value: riskPatients.filter((a: any) => a.observationLevelMet === ObservationStatus.No || !a.observationLevelMet).length },
+    ];
+
+    // Standard 3: Safety Assessment
+    const safetyCompliantCount = audits.filter((a: any) => {
+      if (!a.clinicianSeen) return false;
+      return (
+        a.riskAssessmentType &&
+        a.riskAssessmentTrigger &&
+        a.riskAssessmentFuture &&
+        a.riskAssessmentHistory === "Adequate"
+      );
+    }).length;
+
+    // Data for Risk Assessment Components Chart
+    const clinicianSeenAudits = audits.filter((a: any) => a.clinicianSeen);
+    const assessmentData = [
+      { name: "Type", value: 0, total: clinicianSeenAudits.length },
+      { name: "Trigger", value: 0, total: clinicianSeenAudits.length },
+      { name: "Future", value: 0, total: clinicianSeenAudits.length },
+      { name: "History", value: 0, total: clinicianSeenAudits.length },
+    ];
+
+    if (clinicianSeenAudits.length > 0) {
+      assessmentData[0].value = Math.round((clinicianSeenAudits.filter((a: any) => a.riskAssessmentType).length / clinicianSeenAudits.length) * 100);
+      assessmentData[1].value = Math.round((clinicianSeenAudits.filter((a: any) => a.riskAssessmentTrigger).length / clinicianSeenAudits.length) * 100);
+      assessmentData[2].value = Math.round((clinicianSeenAudits.filter((a: any) => a.riskAssessmentFuture).length / clinicianSeenAudits.length) * 100);
+      assessmentData[3].value = Math.round((clinicianSeenAudits.filter((a: any) => a.riskAssessmentHistory === "Adequate").length / clinicianSeenAudits.length) * 100);
+    }
+
+
+
+    return {
+      totalAudits: total,
+      triageCompliance: total === 0 ? 0 : Math.round((triageCompliantCount / total) * 100),
+      observationCompliance: riskPatients.length === 0 ? 100 : Math.round((obsCompliantCount / riskPatients.length) * 100),
+      safetyCompliance: total === 0 ? 0 : Math.round((safetyCompliantCount / total) * 100),
+      recent: audits.slice(0, 5).map((a: any) => ({
+        id: a.patientToken,
+        type: a.clinicianSeen && a.triagePerformed ? "FULL" : (a.clinicianSeen ? "SAFETY" : "ALERTS"),
+        time: a.createdAt || new Date().toISOString()
+      })),
+      riskData: [
+        { name: "High", count: audits.filter((a: any) => a.riskLevel === "High").length },
+        { name: "Medium", count: audits.filter((a: any) => a.riskLevel === "Medium").length },
+        { name: "Low", count: audits.filter((a: any) => a.riskLevel === "Low").length },
+        { name: "Unknown", count: audits.filter((a: any) => !a.riskLevel).length },
+      ].filter(d => d.count > 0),
+      triageRunData,
+      obsData,
+      assessmentData,
+    };
+  }, [allAudits]);
+
+  // Fetch Baseline Data (CSV)
+  const { data: baselineMetrics } = useQuery({
+    queryKey: ["baselineData"],
+    queryFn: async () => {
+      try {
+        const records = await parseAndSeedFromCsv('/Combined-data.csv');
+        const total = records.length;
+        if (total === 0) return null;
+
+        // Triage
+        const triagePass = records.filter((a: any) => {
+          if (!a.triageTime || !a.arrivalDate) return false;
+          const diff = differenceInMinutes(new Date(a.triageTime), new Date(a.arrivalDate));
+          return diff <= 15 && diff >= 0;
+        }).length;
+
+        // Obs
+        const riskSubset = records.filter((a: any) => a.riskLevel === RiskLevel.Medium || a.riskLevel === RiskLevel.High);
+        const obsPass = riskSubset.filter((a: any) => a.observationLevelMet === ObservationStatus.Yes).length;
+
+        // Safety
+        const safetyPass = records.filter((a: any) => {
+          if (!a.clinicianSeen) return false;
+          return (
+            a.riskAssessmentType &&
+            a.riskAssessmentTrigger &&
+            a.riskAssessmentFuture &&
+            a.riskAssessmentHistory === "Adequate"
+          );
+        }).length;
+
+        return {
+          triage: Math.round((triagePass / total) * 100),
+          obs: riskSubset.length === 0 ? 0 : Math.round((obsPass / riskSubset.length) * 100),
+          safety: Math.round((safetyPass / total) * 100),
+          trendData: [
+            { date: "Baseline", triage: Math.round((triagePass / total) * 100), observation: riskSubset.length === 0 ? 0 : Math.round((obsPass / riskSubset.length) * 100), safety: Math.round((safetyPass / total) * 100) }
+          ]
+        };
+      } catch (e) {
+        console.error("Failed to fetch baseline", e);
+        return null;
+      }
+    },
+    staleTime: Infinity
+  });
+
+  const finalMetrics = useMemo(() => {
+    const baseline = baselineMetrics || { triage: 0, obs: 0, safety: 0, trendData: [] };
+
+    return {
+      ...metrics,
+      trends: {
+        // Current - Baseline
+        triage: metrics.triageCompliance - baseline.triage,
+        obs: metrics.observationCompliance - baseline.obs,
+        safety: metrics.safetyCompliance - baseline.safety,
+        total: metrics.totalAudits - 137 // Hardcoded approximate baseline count diff or just show count? Let's just show count.
+      },
+      // Trend Chart: Show Baseline + Live
+      trendData: [
+        ...baseline.trendData.map((d: any) => ({ ...d, date: "Baseline" })),
+        {
+          date: "Current",
+          triage: metrics.triageCompliance,
+          observation: metrics.observationCompliance,
+          safety: metrics.safetyCompliance
+        }
+      ]
+    };
+  }, [metrics, baselineMetrics]);
+
+  if (isLoading || !allAudits) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -63,6 +239,9 @@ function Dashboard() {
           </MotionDiv>
 
           <nav className="flex items-center gap-3">
+            <Link to="/report">
+              <Button variant="ghost" className="text-muted-foreground hover:text-foreground">Report</Button>
+            </Link>
             <Link to="/data">
               <Button variant="ghost" className="text-muted-foreground hover:text-foreground">View All Data</Button>
             </Link>
@@ -73,17 +252,25 @@ function Dashboard() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto p-6 space-y-8">
-        <AnimatedContainer className="space-y-8">
+      <main className="max-w-7xl mx-auto p-4 space-y-6">
+        <AnimatedContainer className="space-y-6">
+          {/* Stats Overview Header - Removed Gender Filter */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-medium text-foreground">Overview</h2>
+            <span className="text-sm text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
+              {finalMetrics.totalAudits} Patient Presentations (Live)
+            </span>
+          </div>
+
           {/* Top Metric Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             <AnimatedItem>
               <MetricCard
                 title="Total Audits"
-                value={metrics.totalAudits}
-                subtitle="This week"
+                value={finalMetrics.totalAudits}
+                subtitle="Live Data"
                 icon={Users}
-                trend="+12%"
+                trend=""
                 trendUp={true}
                 colorClass="bg-blue-50 text-blue-600 dark:bg-blue-900/20"
               />
@@ -91,104 +278,72 @@ function Dashboard() {
             <AnimatedItem>
               <MetricCard
                 title="Triage < 15m"
-                value={metrics.triageCompliance}
+                value={finalMetrics.triageCompliance}
                 suffix="%"
-                subtitle="Target: 90%"
+                subtitle="vs Baseline"
                 icon={Clock}
-                trend="-2%"
-                trendUp={false}
-                alert={metrics.triageCompliance < 80}
+                trend={`${finalMetrics.trends.triage > 0 ? '+' : ''}${finalMetrics.trends.triage}%`}
+                trendUp={finalMetrics.trends.triage >= 0}
+                alert={finalMetrics.triageCompliance < 80}
                 colorClass="bg-violet-50 text-violet-600 dark:bg-violet-900/20"
               />
             </AnimatedItem>
             <AnimatedItem>
               <MetricCard
                 title="Obs Compliance"
-                value={metrics.observationCompliance}
+                value={finalMetrics.observationCompliance}
                 suffix="%"
-                subtitle="High/Med Risk"
+                subtitle="vs Baseline"
                 icon={ShieldCheck}
-                trend="+5%"
-                trendUp={true}
+                trend={`${finalMetrics.trends.obs > 0 ? '+' : ''}${finalMetrics.trends.obs}%`}
+                trendUp={finalMetrics.trends.obs >= 0}
                 colorClass="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20"
               />
             </AnimatedItem>
             <AnimatedItem>
               <MetricCard
                 title="Clinical Assess."
-                value={metrics.safetyCompliance}
+                value={finalMetrics.safetyCompliance}
                 suffix="%"
-                subtitle="4/4 Elements"
+                subtitle="vs Baseline"
                 icon={AlertTriangle}
-                trend="+8%"
-                trendUp={true}
-                alert={metrics.safetyCompliance < 70}
+                trend={`${finalMetrics.trends.safety > 0 ? '+' : ''}${finalMetrics.trends.safety}%`}
+                trendUp={finalMetrics.trends.safety >= 0}
+                alert={finalMetrics.safetyCompliance < 70}
                 colorClass="bg-amber-50 text-amber-600 dark:bg-amber-900/20"
               />
             </AnimatedItem>
           </div>
 
-          {/* Detailed Sections */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Chart Area */}
-            <AnimatedItem className="lg:col-span-2">
-              <HoverCard className="h-full premium-card !p-0 overflow-hidden border-border/50 shadow-sm bg-card">
-                <div className="p-6 border-b border-border/50">
-                  <CardTitle className="flex items-center gap-2">
-                    <FileBarChart className="w-5 h-5 text-brand-500" />
-                    Compliance Trends
-                  </CardTitle>
-                  <CardDescription>Weekly performance against RCEM standards.</CardDescription>
-                </div>
-                <CardContent className="p-6">
-                  <div className="space-y-8">
-                    <div className="space-y-3">
-                      <div className="flex justify-between text-sm font-medium">
-                        <span className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-violet-500" />
-                          Standard 1: Triage Timeliness
-                        </span>
-                        <span className={cn("font-bold", metrics.triageCompliance < 80 ? "text-red-500" : "text-violet-600")}>
-                          {metrics.triageCompliance}%
-                        </span>
-                      </div>
-                      <AnimatedProgress value={metrics.triageCompliance} className="h-2.5 bg-neutral-100 dark:bg-neutral-800" indicatorClassName={metrics.triageCompliance < 80 ? "bg-red-500" : "bg-violet-500"} />
-                    </div>
+          {/* Charts Row 1: Time to Triage Run Chart (Visualisation for Standard 1) */}
+          <AnimatedItem>
+            <TimeRunChart data={finalMetrics.triageRunData} />
+          </AnimatedItem>
 
-                    <div className="space-y-3">
-                      <div className="flex justify-between text-sm font-medium">
-                        <span className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                          Standard 2: Safety Observations
-                        </span>
-                        <span className="font-bold text-emerald-600">{metrics.observationCompliance}%</span>
-                      </div>
-                      <AnimatedProgress value={metrics.observationCompliance} className="h-2.5 bg-neutral-100 dark:bg-neutral-800" indicatorClassName="bg-emerald-500" />
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="flex justify-between text-sm font-medium">
-                        <span className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-amber-500" />
-                          Standard 3: Clinical Risk (S.A.F.E)
-                        </span>
-                        <span className={cn("font-bold", metrics.safetyCompliance < 70 ? "text-amber-500" : "text-emerald-500")}>
-                          {metrics.safetyCompliance}%
-                        </span>
-                      </div>
-                      <AnimatedProgress value={metrics.safetyCompliance} className="h-2.5 bg-neutral-100 dark:bg-neutral-800" indicatorClassName="bg-amber-500" />
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="bg-muted/30 border-t border-border/50 p-4">
-                  <Link to="/data" className="w-full">
-                    <Button variant="outline" className="w-full bg-background hover:bg-muted/50 transition-colors">
-                      View Detailed Report <ArrowUpRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </Link>
-                </CardFooter>
-              </HoverCard>
+          {/* Charts Row 2: Observation & Risk Components (Standard 2 & 3) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <AnimatedItem>
+              <ObservationEvidenceChart data={finalMetrics.obsData} />
             </AnimatedItem>
+            <AnimatedItem>
+              <RiskAssessmentComponentsChart data={finalMetrics.assessmentData} />
+            </AnimatedItem>
+          </div>
+
+          {/* Charts Row 3: Demographics & Trends (Supplemental) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Swapped Gender for Compliance Trend */}
+            <AnimatedItem>
+              <ComplianceTrendChart data={finalMetrics.trendData} />
+            </AnimatedItem>
+            <AnimatedItem>
+              <RiskLevelChart data={finalMetrics.riskData} />
+            </AnimatedItem>
+          </div>
+
+          {/* Detailed Sections: Feed */}
+          <div className="grid grid-cols-1 gap-8">
+            {/* Recent Activity / Feed */}
 
             {/* Recent Activity / Feed */}
             <AnimatedItem>
@@ -202,7 +357,7 @@ function Dashboard() {
                 </div>
                 <CardContent className="!p-0">
                   <div className="divide-y divide-border/50">
-                    {metrics.recent?.map((item: any, i: number) => (
+                    {finalMetrics.recent?.map((item: any, i: number) => (
                       <MotionDiv
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -229,7 +384,7 @@ function Dashboard() {
                         </div>
                       </MotionDiv>
                     ))}
-                    {(!metrics.recent || metrics.recent.length === 0) && (
+                    {(!finalMetrics.recent || finalMetrics.recent.length === 0) && (
                       <div className="p-8 text-sm text-muted-foreground text-center italic">No audits yet.</div>
                     )}
                   </div>

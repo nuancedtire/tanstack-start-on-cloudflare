@@ -9,12 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ReportRouteImport } from './routes/report'
 import { Route as DataRouteImport } from './routes/data'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuditIndexRouteImport } from './routes/audit/index'
 import { Route as AuditFormRouteImport } from './routes/audit/form'
 
+const ReportRoute = ReportRouteImport.update({
+  id: '/report',
+  path: '/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DataRoute = DataRouteImport.update({
   id: '/data',
   path: '/data',
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/data': typeof DataRoute
+  '/report': typeof ReportRoute
   '/audit/form': typeof AuditFormRoute
   '/audit': typeof AuditIndexRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/data': typeof DataRoute
+  '/report': typeof ReportRoute
   '/audit/form': typeof AuditFormRoute
   '/audit': typeof AuditIndexRoute
 }
@@ -60,27 +68,43 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/data': typeof DataRoute
+  '/report': typeof ReportRoute
   '/audit/form': typeof AuditFormRoute
   '/audit/': typeof AuditIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/data' | '/audit/form' | '/audit'
+  fullPaths: '/' | '/dashboard' | '/data' | '/report' | '/audit/form' | '/audit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/data' | '/audit/form' | '/audit'
-  id: '__root__' | '/' | '/dashboard' | '/data' | '/audit/form' | '/audit/'
+  to: '/' | '/dashboard' | '/data' | '/report' | '/audit/form' | '/audit'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/data'
+    | '/report'
+    | '/audit/form'
+    | '/audit/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
   DataRoute: typeof DataRoute
+  ReportRoute: typeof ReportRoute
   AuditFormRoute: typeof AuditFormRoute
   AuditIndexRoute: typeof AuditIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/report': {
+      id: '/report'
+      path: '/report'
+      fullPath: '/report'
+      preLoaderRoute: typeof ReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/data': {
       id: '/data'
       path: '/data'
@@ -123,6 +147,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   DataRoute: DataRoute,
+  ReportRoute: ReportRoute,
   AuditFormRoute: AuditFormRoute,
   AuditIndexRoute: AuditIndexRoute,
 }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
 import { format, addDays, isBefore } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -48,6 +49,7 @@ interface AuditFormProps {
 }
 
 export function AuditForm({ initialData, token, arrival, onSuccess, mode = "create" }: AuditFormProps) {
+    const queryClient = useQueryClient();
     const arrivalDate = new Date(arrival);
 
     // Local state for DOB text input to allow fluid typing
@@ -66,23 +68,33 @@ export function AuditForm({ initialData, token, arrival, onSuccess, mode = "crea
 
     const submissionHandler = async (value: any) => {
         try {
-            // Logic for Triage Time Calculation
-            let formattedTriageTime: string | null | undefined = undefined;
-
-            // If we have an existing ISO string and nothing changed, keep it
-            if (initialData?.triageTime && value.triageTime === format(new Date(initialData.triageTime), "HH:mm")) {
-                formattedTriageTime = initialData.triageTime;
-            } else if (value.triageTime && arrival) {
-                // Convert HH:mm to ISO relative to arrival
-                const [hours, minutes] = value.triageTime.split(':').map(Number);
-                let triageDate = new Date(arrival);
-                triageDate.setHours(hours, minutes, 0, 0);
-                if (isBefore(triageDate, arrivalDate)) {
-                    // Logic: If triage time is earlier than arrival (e.g. 01:00 vs 23:00), assume next day
-                    triageDate = addDays(triageDate, 1);
+            // Helper to process HH:mm times relative to Arrival
+            const processTime = (timeStr: string | undefined | null, originalIso: string | undefined | null) => {
+                if (!timeStr) return undefined;
+                // If we have an existing ISO string and nothing changed, keep it
+                if (originalIso && timeStr === format(new Date(originalIso), "HH:mm")) {
+                    return originalIso;
                 }
-                formattedTriageTime = triageDate.toISOString();
-            }
+                if (!arrival) return undefined;
+
+                // Convert HH:mm to ISO relative to arrival
+                const [hours, minutes] = timeStr.split(':').map(Number);
+                let date = new Date(arrival);
+                date.setHours(hours, minutes, 0, 0);
+                
+                // Logic: If time is earlier than arrival (e.g. 01:00 vs 23:00), assume next day
+                // because all these events happen AFTER arrival.
+                if (isBefore(date, arrivalDate)) {
+                    date = addDays(date, 1);
+                }
+                return date.toISOString();
+            };
+
+            const formattedTriageTime = processTime(value.triageTime, initialData?.triageTime);
+            const formattedClinicianTime = processTime(value.clinicianSeenTime, initialData?.clinicianSeenTime);
+            const formattedPsychRefTime = processTime(value.psychReferralTime, initialData?.psychReferralTime);
+            const formattedPsychRevTime = processTime(value.psychReviewTime, initialData?.psychReviewTime);
+            const formattedDepartureTime = processTime(value.departureTime, initialData?.departureTime);
 
             // Logic for History Status (SAFETY)
             let historyStatus = "Poor";
@@ -97,18 +109,28 @@ export function AuditForm({ initialData, token, arrival, onSuccess, mode = "crea
                 val.dateOfBirth = val.dateOfBirth.toISOString();
             }
 
+            // Remove UI-only fields
+            const { environmentSocial, environmentAlcohol, ...cleanValues } = value;
+
             const payload = {
-                ...value,
+                ...cleanValues,
                 patientToken: token,
                 arrivalDate: arrival,
                 triageTime: formattedTriageTime,
+                
+                // New Timings
+                clinicianSeenTime: formattedClinicianTime,
+                psychReferralTime: formattedPsychRefTime,
+                psychReviewTime: formattedPsychRevTime,
+                departureTime: formattedDepartureTime,
+
                 // Only set createdAt on create, or keep original
                 createdAt: initialData?.createdAt || new Date().toISOString(),
                 // Safety Calc
                 riskAssessmentHistory: historyStatus,
                 drugAlcoholConsidered: val.environmentAlcohol || false,
                 // Ensure booleans
-                clinicianSeen: true,
+                clinicianSeen: !!val.clinicianSeen, // Explicit boolean
                 triagePerformed: !!val.triagePerformed,
             };
 
@@ -117,6 +139,9 @@ export function AuditForm({ initialData, token, arrival, onSuccess, mode = "crea
             } else {
                 await submitAuditFn({ data: payload });
             }
+
+            // Invalidate queries to refresh data
+            await queryClient.invalidateQueries({ queryKey: ["allAudits"] });
 
             if (onSuccess) onSuccess(payload);
 
@@ -151,7 +176,16 @@ export function AuditForm({ initialData, token, arrival, onSuccess, mode = "crea
             teamCommunication: initialData?.teamCommunication ?? false,
             capacityAssessment: initialData?.capacityAssessment ?? false,
             dischargePlanSafe: initialData?.dischargePlanSafe ?? false,
+            
+            // New Timings
+            clinicianSeen: initialData?.clinicianSeen ?? false,
+            referredToPsych: initialData?.referredToPsych ?? false,
+            clinicianSeenTime: initialData?.clinicianSeenTime ? format(new Date(initialData.clinicianSeenTime), "HH:mm") : undefined,
+            psychReferralTime: initialData?.psychReferralTime ? format(new Date(initialData.psychReferralTime), "HH:mm") : undefined,
+            psychReviewTime: initialData?.psychReviewTime ? format(new Date(initialData.psychReviewTime), "HH:mm") : undefined,
+            departureTime: initialData?.departureTime ? format(new Date(initialData.departureTime), "HH:mm") : undefined,
         },
+
         onSubmit: async ({ value }) => {
             await submissionHandler(value);
         },
@@ -271,8 +305,7 @@ export function AuditForm({ initialData, token, arrival, onSuccess, mode = "crea
                                                 <SelectContent>
                                                     <SelectItem value="Male">Male</SelectItem>
                                                     <SelectItem value="Female">Female</SelectItem>
-                                                    <SelectItem value="Other">Other</SelectItem>
-                                                    <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+                                                    <SelectItem value="Not Known">Not Known</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>
@@ -411,8 +444,8 @@ export function AuditForm({ initialData, token, arrival, onSuccess, mode = "crea
                                 />
 
                                 <form.Subscribe
-                                    selector={(state) => [state.values.riskLevel]}
-                                    children={([riskLevel]) => {
+                                    selector={(state) => state.values.riskLevel}
+                                    children={(riskLevel) => {
                                         if (riskLevel === "Medium" || riskLevel === "High") {
                                             const isHigh = riskLevel === "High";
                                             return (
@@ -558,6 +591,47 @@ export function AuditForm({ initialData, token, arrival, onSuccess, mode = "crea
                                 </div>
                             </div>
                         </div>
+
+                        {/* ED Review Time */}
+                        <HoverCard className="group premium-card border-none ring-1 ring-border shadow-sm mb-6">
+                            <CardHeader className="pb-4">
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <Clock className="w-4 h-4 text-blue-500" />
+                                    ED Clinician Review
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="grid sm:grid-cols-2 gap-6">
+                                <form.Field
+                                    name="clinicianSeen"
+                                    children={(field) => (
+                                        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-border/50">
+                                            <Label htmlFor={field.name} className="font-semibold cursor-pointer">
+                                                Seen by ED Clinician?
+                                            </Label>
+                                            <Switch
+                                                id={field.name}
+                                                checked={field.state.value}
+                                                onCheckedChange={field.handleChange}
+                                            />
+                                        </div>
+                                    )}
+                                />
+                                <form.Field
+                                    name="clinicianSeenTime"
+                                    children={(field) => (
+                                        <div className="space-y-2">
+                                            <Label className="text-sm font-medium">Time of Review</Label>
+                                            <Input
+                                                type="time"
+                                                className="bg-white dark:bg-black"
+                                                value={field.state.value || ""}
+                                                onChange={(e) => field.handleChange(e.target.value)}
+                                            />
+                                        </div>
+                                    )}
+                                />
+                            </CardContent>
+                        </HoverCard>
 
                         <HoverCard className="group premium-card border-none ring-1 ring-border shadow-sm mb-6">
                             <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500" />
@@ -716,6 +790,100 @@ export function AuditForm({ initialData, token, arrival, onSuccess, mode = "crea
                                                 Safety Netting & Discharge Plan
                                             </Label>
                                             <Switch id="discharge-plan" checked={field.state.value} onCheckedChange={field.handleChange} />
+                                        </div>
+                                    )}
+                                />
+                            </CardContent>
+                        </HoverCard>
+                    </AnimatedItem>
+
+                    {/* SECTION 3: OUTCOMES (NEW) */}
+                    <AnimatedItem>
+                        <div className="flex items-center justify-between mb-6 pt-8 border-t-2 border-dashed border-border/50">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-indigo-100 text-indigo-700 rounded-xl shadow-sm"><CheckCircle2 className="w-6 h-6" /></div>
+                                <div>
+                                    <h2 className="text-2xl font-bold text-foreground">Part 3: Outcomes & Timings</h2>
+                                    <p className="text-muted-foreground text-sm">Discharge & Liaison Pathway</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <HoverCard className="group premium-card border-none ring-1 ring-border shadow-sm mb-6">
+                            <CardHeader className="pb-4">
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    Psychiatric Liaison
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <form.Field
+                                    name="referredToPsych"
+                                    children={(field) => (
+                                        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-border/50">
+                                            <Label htmlFor={field.name} className="font-semibold cursor-pointer">
+                                                Referred to Psych Liaison?
+                                            </Label>
+                                            <Switch
+                                                id={field.name}
+                                                checked={field.state.value}
+                                                onCheckedChange={field.handleChange}
+                                            />
+                                        </div>
+                                    )}
+                                />
+
+                                <div className="grid sm:grid-cols-2 gap-6">
+                                    <form.Field
+                                        name="psychReferralTime"
+                                        children={(field) => (
+                                            <div className="space-y-2">
+                                                <Label className="text-sm font-medium">Time of Referral</Label>
+                                                <Input
+                                                    type="time"
+                                                    className="bg-white dark:bg-black"
+                                                    value={field.state.value || ""}
+                                                    onChange={(e) => field.handleChange(e.target.value)}
+                                                />
+                                            </div>
+                                        )}
+                                    />
+                                    <form.Field
+                                        name="psychReviewTime"
+                                        children={(field) => (
+                                            <div className="space-y-2">
+                                                <Label className="text-sm font-medium">Time of Psych Review</Label>
+                                                <Input
+                                                    type="time"
+                                                    className="bg-white dark:bg-black"
+                                                    value={field.state.value || ""}
+                                                    onChange={(e) => field.handleChange(e.target.value)}
+                                                />
+                                            </div>
+                                        )}
+                                    />
+                                </div>
+                            </CardContent>
+                        </HoverCard>
+
+                        <HoverCard className="group premium-card border-none ring-1 ring-border shadow-sm mb-6">
+                            <CardHeader className="pb-4">
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    Discharge
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <form.Field
+                                    name="departureTime"
+                                    children={(field) => (
+                                        <div className="space-y-2">
+                                            <Label className="text-sm font-medium">Time of Departure from ED</Label>
+                                            <Input
+                                                type="time"
+                                                className="bg-white dark:bg-black font-mono text-lg"
+                                                value={field.state.value || ""}
+                                                onChange={(e) => field.handleChange(e.target.value)}
+                                            />
+                                            <p className="text-xs text-muted-foreground">Used to calculate Total Time in Department</p>
                                         </div>
                                     )}
                                 />
