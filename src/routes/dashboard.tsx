@@ -26,7 +26,6 @@ import {
 } from "@/components/ui/motion";
 import {
   RiskLevelChart,
-  ComplianceTrendChart,
   TimeRunChart,
   ObservationEvidenceChart,
   RiskAssessmentComponentsChart
@@ -66,17 +65,17 @@ function Dashboard() {
     // Data for Run Chart (Triage Times)
     const triageRunData = audits
       .filter((a: any) => a.triageTime && a.arrivalDate)
-      .map((a: any) => {
+      .sort((a: any, b: any) => new Date(a.arrivalDate).getTime() - new Date(b.arrivalDate).getTime())
+      .map((a: any, index: number) => {
         const diff = differenceInMinutes(new Date(a.triageTime), new Date(a.arrivalDate));
         return {
           id: a.patientToken?.substring(0, 4) || 'Unk',
           minutes: diff < 0 ? 0 : diff, // Handle potential data errors
-          compliant: diff <= 15 && diff >= 0
+          compliant: diff <= 15 && diff >= 0,
+          arrivalDate: a.arrivalDate,
+          index: index + 1
         };
-      })
-      // sort by created at or arrival? Run charts usually chronological.
-      .sort(() => 0); // Keep original order or sort by date if available in filter map 
-    // Actually map doesn't preserve index well if filtered. Let's trust array order is chronological fetch.
+      });
 
     // Standard 2: Med/High Risk Obs
     const riskPatients = audits.filter((a: any) => a.riskLevel === RiskLevel.Medium || a.riskLevel === RiskLevel.High);
@@ -333,9 +332,6 @@ function Dashboard() {
           {/* Charts Row 3: Demographics & Trends (Supplemental) */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Swapped Gender for Compliance Trend */}
-            <AnimatedItem>
-              <ComplianceTrendChart data={finalMetrics.trendData} />
-            </AnimatedItem>
             <AnimatedItem>
               <RiskLevelChart data={finalMetrics.riskData} />
             </AnimatedItem>

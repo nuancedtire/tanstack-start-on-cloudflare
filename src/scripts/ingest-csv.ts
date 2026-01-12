@@ -95,6 +95,9 @@ export async function parseAndSeedFromCsv(csvUrl: string): Promise<any[]> {
                 clinicianSeenTime,
                 psychReferralTime,
                 psychReviewTime,
+                psychReferral: row['psychiatric-referral'] === 'yes',
+                capacityAssessment: row['capacity-assessment'],
+                dischargePlanSafe: row['safe-discharge-plan'] === 'yes', // Mapping for Y
                 departureTime,
                 riskAssessmentType: !!row['type-self-harm'],
                 riskAssessmentTrigger: !!row['reason-trigger'],

@@ -30,9 +30,9 @@ export async function decryptWithPin(encrypted: string, pin: string): Promise<st
         const key = await deriveKey(pin, salt);
         
         const decrypted = await crypto.subtle.decrypt(
-            { name: "AES-GCM", iv },
+            { name: "AES-GCM", iv: iv as any },
             key,
-            ciphertext
+            ciphertext as any
         );
 
         const decoder = new TextDecoder();

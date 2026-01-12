@@ -1,4 +1,4 @@
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line, ComposedChart, Scatter, ReferenceLine } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 // Color palette for charts
@@ -12,6 +12,13 @@ const COLORS = {
     yes: '#10b981',
     partial: '#f59e0b',
     no: '#ef4444',
+    // Safety colors
+    s: '#f59e0b',
+    a: '#f59e0b',
+    f: '#f59e0b',
+    e: '#f59e0b',
+    t: '#3b82f6', // Team - Blue
+    y: '#10b981', // You - Green
 };
 
 interface TimeRunChartProps {
@@ -19,6 +26,8 @@ interface TimeRunChartProps {
         id: string;
         minutes: number;
         compliant: boolean;
+        arrivalDate?: string;
+        index: number;
     }>;
 }
 
@@ -30,43 +39,68 @@ export function TimeRunChart({ data }: TimeRunChartProps) {
                     <span className="w-2 h-2 rounded-full bg-violet-500" />
                     Time to Triage Run Chart
                 </CardTitle>
-                <CardDescription>Minutes from arrival to mental health triage per patient</CardDescription>
+                <CardDescription>Minutes from arrival to mental health triage per patient (Chronological)</CardDescription>
             </CardHeader>
             <CardContent className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={data}>
+                    <ComposedChart data={data}>
                         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                        <XAxis dataKey="id" hide />
-                        <YAxis label={{ value: 'Minutes', angle: -90, position: 'insideLeft', fill: 'hsl(var(--muted-foreground))' }} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                        <XAxis
+                            dataKey="index"
+                            label={{ value: 'Patient Sequence', position: 'insideBottomRight', offset: -10, fill: 'hsl(var(--muted-foreground))' }}
+                            tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                        />
+                        <YAxis
+                            label={{ value: 'Minutes', angle: -90, position: 'insideLeft', fill: 'hsl(var(--muted-foreground))' }}
+                            tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                        />
                         <Tooltip
                             contentStyle={{
                                 backgroundColor: 'hsl(var(--background))',
                                 border: '1px solid hsl(var(--border))',
                                 borderRadius: '8px'
                             }}
-                            labelFormatter={(label) => `Patient: ${label}`}
+                            labelFormatter={(label, payload) => {
+                                if (payload && payload.length > 0 && payload[0].payload.arrivalDate) {
+                                    return `Patient #${label} (${new Date(payload[0].payload.arrivalDate).toLocaleDateString()})`;
+                                }
+                                return `Patient #${label}`;
+                            }}
                         />
+                        {/* Reference Line for Target (15 mins) */}
+                        <ReferenceLine y={15} label="Target (15m)" stroke="#10b981" strokeDasharray="3 3" />
+
+                        {/* The Run Chart Line (Trend) */}
                         <Line
                             type="monotone"
                             dataKey="minutes"
                             stroke="#8b5cf6"
-                            strokeWidth={2}
-                            dot={(props: any) => {
+                            strokeWidth={1}
+                            dot={false}
+                            activeDot={false}
+                            className="opacity-50"
+                        />
+
+                        {/* The Individual Data Points (Scatter) */}
+                        <Scatter
+                            dataKey="minutes"
+                            fill="#8884d8"
+                            shape={(props: any) => {
                                 const { cx, cy, payload } = props;
                                 return (
                                     <circle
                                         cx={cx}
                                         cy={cy}
-                                        r={4}
+                                        r={5}
                                         fill={payload.compliant ? COLORS.low : COLORS.high}
-                                        stroke="none"
+                                        stroke="white"
+                                        strokeWidth={1}
+                                        className="hover:scale-125 transition-transform"
                                     />
                                 );
                             }}
                         />
-                        {/* Reference lines for 15 and 60 mins */}
-                        <Line type="monotone" dataKey="reference15" stroke="transparent" dot={false} />
-                    </LineChart>
+                    </ComposedChart>
                 </ResponsiveContainer>
             </CardContent>
         </Card>
@@ -82,8 +116,8 @@ interface ObservationEvidenceProps {
 
 export function ObservationEvidenceChart({ data }: ObservationEvidenceProps) {
     const getBarColor = (name: string) => {
-        if (name === 'Yes') return COLORS.yes;
-        if (name === 'Partial') return COLORS.partial;
+        if (name === 'Yes' || name === 'Good Evidence') return COLORS.yes;
+        if (name === 'Partial' || name.includes('Partial')) return COLORS.partial;
         return COLORS.no;
     };
 
@@ -244,70 +278,6 @@ export function RiskLevelChart({ data }: RiskLevelChartProps) {
                             ))}
                         </Bar>
                     </BarChart>
-                </ResponsiveContainer>
-            </CardContent>
-        </Card>
-    );
-}
-
-interface ComplianceTrendProps {
-    data: Array<{
-        date: string;
-        triage: number;
-        observation: number;
-        safety: number;
-    }>;
-}
-
-export function ComplianceTrendChart({ data }: ComplianceTrendProps) {
-    return (
-        <Card className="premium-card !px-0">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-brand-500" />
-                    Compliance Trends
-                </CardTitle>
-                <CardDescription>Weekly compliance rates over time</CardDescription>
-            </CardHeader>
-            <CardContent className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={data}>
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                        <XAxis dataKey="date" className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-                        <YAxis tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-                        <Tooltip
-                            contentStyle={{
-                                backgroundColor: 'hsl(var(--background))',
-                                border: '1px solid hsl(var(--border))',
-                                borderRadius: '8px'
-                            }}
-                        />
-                        <Legend />
-                        <Line
-                            type="monotone"
-                            dataKey="triage"
-                            stroke="#8b5cf6"
-                            strokeWidth={2}
-                            name="Triage"
-                            dot={{ fill: '#8b5cf6', r: 4 }}
-                        />
-                        <Line
-                            type="monotone"
-                            dataKey="observation"
-                            stroke="#10b981"
-                            strokeWidth={2}
-                            name="Observation"
-                            dot={{ fill: '#10b981', r: 4 }}
-                        />
-                        <Line
-                            type="monotone"
-                            dataKey="safety"
-                            stroke="#f59e0b"
-                            strokeWidth={2}
-                            name="Safety"
-                            dot={{ fill: '#f59e0b', r: 4 }}
-                        />
-                    </LineChart>
                 </ResponsiveContainer>
             </CardContent>
         </Card>

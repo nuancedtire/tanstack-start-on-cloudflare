@@ -31,6 +31,7 @@ import { useState } from "react";
 import { hashMRN } from "@/utils/hash-mrn";
 import { decryptWithPin } from "@/utils/encryption";
 import { PinProtection } from "@/components/pin-protection";
+import { AuditSummary } from "@/components/audit-summary";
 
 export const Route = createFileRoute("/data")({
     component: DataView,
@@ -307,36 +308,8 @@ function DataView() {
                     </DialogHeader>
 
                     {selectedAudit && (
-                        <div className="grid grid-cols-2 gap-4 text-sm mt-4">
-                            <div className="space-y-1">
-                                <h4 className="font-semibold text-muted-foreground">Arrival</h4>
-                                <p className="font-mono bg-muted p-1 rounded">{format(new Date(selectedAudit.arrivalDate), "yyyy-MM-dd HH:mm")}</p>
-                            </div>
-                            <div className="space-y-1">
-                                <h4 className="font-semibold text-muted-foreground">Triage Time</h4>
-                                <p className="font-mono bg-muted p-1 rounded">{selectedAudit.triageTime ? format(new Date(selectedAudit.triageTime), "HH:mm") : "N/A"}</p>
-                            </div>
-                            <div className="col-span-2 border-t pt-4 mt-2">
-                                <h4 className="font-semibold mb-2">Clinical Assessment</h4>
-                                <ul className="grid grid-cols-2 gap-2">
-                                    <li className="flex justify-between border-b pb-1">
-                                        <span>Risk Level</span>
-                                        <span className="font-medium">{selectedAudit.riskLevel}</span>
-                                    </li>
-                                    <li className="flex justify-between border-b pb-1">
-                                        <span>Self-Harm Type</span>
-                                        <span className="font-medium">{selectedAudit.riskAssessmentType ? "Yes" : "No"}</span>
-                                    </li>
-                                    <li className="flex justify-between border-b pb-1">
-                                        <span>Safeguarding</span>
-                                        <span className="font-medium">{selectedAudit.safeguardingCheck ? "Yes" : "No"}</span>
-                                    </li>
-                                    <li className="flex justify-between border-b pb-1">
-                                        <span>Discharge Plan</span>
-                                        <span className="font-medium">{selectedAudit.dischargePlanSafe ? "Yes" : "No"}</span>
-                                    </li>
-                                </ul>
-                            </div>
+                        <div className="mt-4">
+                            <AuditSummary values={selectedAudit} arrival={selectedAudit.arrivalDate} />
                         </div>
                     )}
                 </DialogContent>
