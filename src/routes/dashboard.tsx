@@ -28,7 +28,8 @@ import {
   RiskLevelChart,
   TimeRunChart,
   ObservationEvidenceChart,
-  RiskAssessmentComponentsChart
+  RiskAssessmentComponentsChart,
+  SafeguardingComplianceChart
 } from "@/components/chart-components";
 import { parseAndSeedFromCsv } from "@/scripts/ingest-csv";
 import { RiskLevel, ObservationStatus } from "@/lib/schema";
@@ -115,7 +116,16 @@ function Dashboard() {
       assessmentData[3].value = Math.round((clinicianSeenAudits.filter((a: any) => a.riskAssessmentHistory === "Adequate").length / clinicianSeenAudits.length) * 100);
     }
 
+    // Data for Safeguarding Compliance Chart
+    const safeguardingData = [
+      { name: "Description", value: 0 },
+      { name: "Ligature", value: 0 },
+    ];
 
+    if (total > 0) {
+      safeguardingData[0].value = Math.round((audits.filter((a: any) => a.patientDescription).length / total) * 100);
+      safeguardingData[1].value = Math.round((audits.filter((a: any) => a.ligatureCheck).length / total) * 100);
+    }
 
     return {
       totalAudits: total,
@@ -136,6 +146,7 @@ function Dashboard() {
       triageRunData,
       obsData,
       assessmentData,
+      safeguardingData,
     };
   }, [allAudits]);
 
@@ -334,6 +345,9 @@ function Dashboard() {
             {/* Swapped Gender for Compliance Trend */}
             <AnimatedItem>
               <RiskLevelChart data={finalMetrics.riskData} />
+            </AnimatedItem>
+            <AnimatedItem>
+              <SafeguardingComplianceChart data={finalMetrics.safeguardingData} />
             </AnimatedItem>
           </div>
 

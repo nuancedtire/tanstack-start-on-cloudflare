@@ -107,6 +107,46 @@ export function TimeRunChart({ data }: TimeRunChartProps) {
     );
 }
 
+interface SafeguardingComplianceProps {
+    data: Array<{
+        name: string;
+        value: number;
+    }>;
+}
+
+export function SafeguardingComplianceChart({ data }: SafeguardingComplianceProps) {
+    return (
+        <Card className="premium-card !px-0">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                    Safeguarding Documentation
+                </CardTitle>
+                <CardDescription>Documentation of description & ligature checks</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={data}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                        <YAxis unit="%" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                        <Tooltip
+                            cursor={{ fill: 'transparent' }}
+                            contentStyle={{
+                                backgroundColor: 'hsl(var(--background))',
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: '8px'
+                            }}
+                            formatter={(value: any) => [`${value}%`, 'Compliance']}
+                        />
+                        <Bar dataKey="value" fill="#6366f1" radius={[8, 8, 0, 0]} barSize={50} />
+                    </BarChart>
+                </ResponsiveContainer>
+            </CardContent>
+        </Card>
+    );
+}
+
 interface ObservationEvidenceProps {
     data: Array<{
         name: string;

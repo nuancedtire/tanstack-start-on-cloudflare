@@ -8,6 +8,7 @@ export const audits = sqliteTable("audits", {
     arrivalDate: text("arrival_date").notNull(),
     dateOfBirth: text("date_of_birth"),
     gender: text("gender"),
+    patientDescription: integer("patient_description", { mode: "boolean" }).default(false),
 
     // Q1.3 - Triage
     triagePerformed: integer("triage_performed", { mode: "boolean" }).default(false),
@@ -27,6 +28,7 @@ export const audits = sqliteTable("audits", {
 
     // Q2.4 - Safeguarding
     safeguardingCheck: integer("safeguarding_check", { mode: "boolean" }).default(false),
+    ligatureCheck: integer("ligature_check", { mode: "boolean" }).default(false),
 
     // Implied / Policy
     searchPolicyFollowed: integer("search_policy_followed", { mode: "boolean" }).default(false),

@@ -177,6 +177,8 @@ export function AuditForm({ initialData, token, encryptedToken, arrival, onSucce
             observationLevelMet: initialData?.observationLevelMet as ObservationStatus | undefined,
             compassionateCare: initialData?.compassionateCare as "Yes" | "Partial" | "No" | undefined,
             safeguardingCheck: initialData?.safeguardingCheck ?? false,
+            patientDescription: initialData?.patientDescription ?? false,
+            ligatureCheck: initialData?.ligatureCheck ?? false,
             riskAssessmentType: initialData?.riskAssessmentType ?? false,
             riskAssessmentTrigger: initialData?.riskAssessmentTrigger ?? false,
             riskAssessmentFuture: initialData?.riskAssessmentFuture ?? false,
@@ -416,6 +418,22 @@ export function AuditForm({ initialData, token, encryptedToken, arrival, onSucce
                                 </RadioGroup>
                             )} />
 
+                            {/* New Documented Checks */}
+                            <div className="grid md:grid-cols-2 gap-4 mb-6">
+                                <form.Field name="patientDescription" children={(field) => (
+                                    <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-border/50">
+                                        <Label className="font-semibold text-base text-emerald-900 dark:text-emerald-100">Description Documented?</Label>
+                                        <Switch checked={field.state.value} onCheckedChange={field.handleChange} className="scale-125" />
+                                    </div>
+                                )} />
+                                <form.Field name="ligatureCheck" children={(field) => (
+                                    <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-border/50">
+                                        <Label className="font-semibold text-base text-emerald-900 dark:text-emerald-100">Ligature Check Done?</Label>
+                                        <Switch checked={field.state.value} onCheckedChange={field.handleChange} className="scale-125" />
+                                    </div>
+                                )} />
+                            </div>
+
                             {/* Observation Logic */}
                             <form.Subscribe selector={s => s.values.riskLevel} children={(level) => {
                                 if (level === "Medium" || level === "High") {
@@ -536,9 +554,9 @@ export function AuditForm({ initialData, token, encryptedToken, arrival, onSucce
                                 <AcronymCard letter="S" title="Suicide Risk" color="blue">
                                     <div className="grid gap-3">
                                         <form.Field name="riskAssessmentType" children={(field) => (
-                                            <Label className={cn("flex items-center gap-4 p-4 rounded-xl border cursor-pointer hover:shadow-md transition-all", field.state.value ? "bg-blue-50 border-blue-200" : "bg-white")}>
-                                                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">S</div>
-                                                <span className="flex-1 font-medium">Type of Self-Harm / Suicide Risk Identified?</span>
+                                            <Label className={cn("flex items-center gap-4 p-4 rounded-xl border cursor-pointer hover:shadow-md transition-all", field.state.value ? "bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800" : "bg-white dark:bg-slate-950 dark:border-slate-800")}>
+                                                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 flex items-center justify-center font-bold">S</div>
+                                                <span className="flex-1 font-medium text-blue-900 dark:text-blue-100">Type of Self-Harm / Suicide Risk Identified?</span>
                                                 <Checkbox checked={field.state.value} onCheckedChange={c => field.handleChange(c === true)} className="scale-125 border-2 w-5 h-5 mr-2" />
                                             </Label>
                                         )} />
@@ -547,9 +565,9 @@ export function AuditForm({ initialData, token, encryptedToken, arrival, onSucce
 
                                 <AcronymCard letter="A" title="Antecedent / Trigger" color="blue">
                                     <form.Field name="riskAssessmentTrigger" children={(field) => (
-                                        <Label className={cn("flex items-center gap-4 p-4 rounded-xl border cursor-pointer hover:shadow-md transition-all", field.state.value ? "bg-blue-50 border-blue-200" : "bg-white")}>
-                                            <Activity className="w-5 h-5 text-blue-600" />
-                                            <span className="flex-1 font-medium">Antecedent / Trigger Identified?</span>
+                                        <Label className={cn("flex items-center gap-4 p-4 rounded-xl border cursor-pointer hover:shadow-md transition-all", field.state.value ? "bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800" : "bg-white dark:bg-slate-950 dark:border-slate-800")}>
+                                            <Activity className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                            <span className="flex-1 font-medium text-blue-900 dark:text-blue-100">Antecedent / Trigger Identified?</span>
                                             <Checkbox checked={field.state.value} onCheckedChange={c => field.handleChange(c === true)} className="scale-125 border-2 w-5 h-5 mr-2" />
                                         </Label>
                                     )} />
@@ -557,9 +575,9 @@ export function AuditForm({ initialData, token, encryptedToken, arrival, onSucce
 
                                 <AcronymCard letter="F" title="Future Intent" color="blue">
                                     <form.Field name="riskAssessmentFuture" children={(field) => (
-                                        <Label className={cn("flex items-center gap-4 p-4 rounded-xl border cursor-pointer hover:shadow-md transition-all", field.state.value ? "bg-blue-50 border-blue-200" : "bg-white")}>
-                                            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">F</div>
-                                            <span className="flex-1 font-medium">Future Intent Assessed?</span>
+                                        <Label className={cn("flex items-center gap-4 p-4 rounded-xl border cursor-pointer hover:shadow-md transition-all", field.state.value ? "bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800" : "bg-white dark:bg-slate-950 dark:border-slate-800")}>
+                                            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 flex items-center justify-center font-bold">F</div>
+                                            <span className="flex-1 font-medium text-blue-900 dark:text-blue-100">Future Intent Assessed?</span>
                                             <Checkbox checked={field.state.value} onCheckedChange={c => field.handleChange(c === true)} className="scale-125 border-2 w-5 h-5 mr-2" />
                                         </Label>
                                     )} />
@@ -568,24 +586,24 @@ export function AuditForm({ initialData, token, encryptedToken, arrival, onSucce
                                 <AcronymCard letter="E" title="Environment & History" color="blue">
                                     <div className="grid gap-4">
                                         <form.Field name="environmentSocial" children={(field) => (
-                                            <Label className={cn("flex items-start gap-4 p-4 rounded-xl border cursor-pointer hover:shadow-md h-full", field.state.value ? "bg-blue-50 border-blue-200" : "bg-white")}>
-                                                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                                            <Label className={cn("flex items-start gap-4 p-4 rounded-xl border cursor-pointer hover:shadow-md h-full transition-colors", field.state.value ? "bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800" : "bg-white dark:bg-slate-950 dark:border-slate-800")}>
+                                                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 flex items-center justify-center shrink-0">
                                                     <Home className="w-4 h-4" />
                                                 </div>
                                                 <div className="flex-1">
-                                                    <span className="font-bold block text-base">Psychosocial History</span>
+                                                    <span className="font-bold block text-base text-blue-900 dark:text-blue-100">Psychosocial History</span>
                                                     <span className="text-sm text-muted-foreground">Is Home Situation, Employment, and Social Support documented?</span>
                                                 </div>
                                                 <Checkbox checked={field.state.value} onCheckedChange={c => field.handleChange(c === true)} className="mt-1 scale-125 border-2 w-5 h-5 mr-2" />
                                             </Label>
                                         )} />
                                         <form.Field name="environmentAlcohol" children={(field) => (
-                                            <Label className={cn("flex items-start gap-4 p-4 rounded-xl border cursor-pointer hover:shadow-md h-full", field.state.value ? "bg-blue-50 border-blue-200" : "bg-white")}>
-                                                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                                            <Label className={cn("flex items-start gap-4 p-4 rounded-xl border cursor-pointer hover:shadow-md h-full transition-colors", field.state.value ? "bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800" : "bg-white dark:bg-slate-950 dark:border-slate-800")}>
+                                                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 flex items-center justify-center shrink-0">
                                                     <Stethoscope className="w-4 h-4" />
                                                 </div>
                                                 <div className="flex-1">
-                                                    <span className="font-bold block text-base">Drug & Alcohol History</span>
+                                                    <span className="font-bold block text-base text-blue-900 dark:text-blue-100">Drug & Alcohol History</span>
                                                     <span className="text-sm text-muted-foreground">Is use (or absence of use) explicitly documented?</span>
                                                 </div>
                                                 <Checkbox checked={field.state.value} onCheckedChange={c => field.handleChange(c === true)} className="mt-1 scale-125 border-2 w-5 h-5 mr-2" />

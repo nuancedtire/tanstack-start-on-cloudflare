@@ -35,6 +35,7 @@ export const AuditRecordSchema = z.object({
     arrivalDate: z.string().datetime(), // ISO String
     dateOfBirth: z.string().optional(), // ISO Date String
     gender: z.enum(["Male", "Female", "Not Known"]).optional(),
+    patientDescription: z.boolean().default(false),
 
     // Q1.3 - Triage
     triagePerformed: z.boolean().default(false),
@@ -55,6 +56,7 @@ export const AuditRecordSchema = z.object({
 
     // Q2.4 - Safeguarding
     safeguardingCheck: z.boolean().default(false),
+    ligatureCheck: z.boolean().default(false),
 
     // Implied / Policy
     searchPolicyFollowed: z.boolean().default(false),
@@ -114,6 +116,7 @@ export const AlertsAuditSchema = AuditRecordSchema.pick({
     observerRoles: true,
     compassionateCare: true,
     safeguardingCheck: true,
+    ligatureCheck: true,
     searchPolicyFollowed: true,
 });
 

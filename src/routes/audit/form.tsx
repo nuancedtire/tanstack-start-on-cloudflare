@@ -30,7 +30,7 @@ function CombinedAuditForm() {
     return (
         <div className="min-h-screen bg-slate-50/50 dark:bg-neutral-950 pb-20">
             {/* Header */}
-            <header className="bg-brand-600/90 backdrop-blur-md text-white border-b border-white/10 sticky top-0 z-20 shadow-xl shadow-brand-900/10">
+            <header className="bg-brand-600/90 backdrop-blur-md text-white border-b border-white/10 sticky top-0 z-30 shadow-xl shadow-brand-900/10">
                 <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Button variant="ghost" className="text-white hover:bg-white/20 hover:text-white p-2 h-auto" onClick={() => window.history.back()}>
