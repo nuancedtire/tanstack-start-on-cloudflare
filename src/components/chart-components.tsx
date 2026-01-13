@@ -219,7 +219,7 @@ export function RiskAssessmentComponentsChart({ data }: RiskAssessmentProps) {
                     <BarChart data={data} layout="vertical">
                         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" horizontal={false} />
                         <XAxis type="number" domain={[0, 100]} unit="%" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-                        <YAxis dataKey="name" type="category" width={100} className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                        <YAxis dataKey="name" type="category" width={150} className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
                         <Tooltip
                             cursor={{ fill: 'transparent' }}
                             contentStyle={{

@@ -92,7 +92,7 @@ const calculateStats = (data: any[]) => {
         { name: "Type", value: clinicianSeen.length ? Math.round((clinicianSeen.filter((a: any) => a.riskAssessmentType).length / clinicianSeen.length) * 100) : 0, total: clinicianSeen.length },
         { name: "Trigger", value: clinicianSeen.length ? Math.round((clinicianSeen.filter((a: any) => a.riskAssessmentTrigger).length / clinicianSeen.length) * 100) : 0, total: clinicianSeen.length },
         { name: "Future Plans", value: clinicianSeen.length ? Math.round((clinicianSeen.filter((a: any) => a.riskAssessmentFuture).length / clinicianSeen.length) * 100) : 0, total: clinicianSeen.length },
-        { name: "History", value: clinicianSeen.length ? Math.round((clinicianSeen.filter((a: any) => a.riskAssessmentHistory === "Adequate").length / clinicianSeen.length) * 100) : 0, total: clinicianSeen.length },
+        { name: "Psych History", value: clinicianSeen.length ? Math.round((clinicianSeen.filter((a: any) => a.riskAssessmentHistory === "Adequate").length / clinicianSeen.length) * 100) : 0, total: clinicianSeen.length },
     ];
 
     const absconded = data.filter((a: any) => a.dischargePlanSafe === false).length;
@@ -473,22 +473,25 @@ function ReportPage() {
                             {/* Standard 3 */}
                             <section>
                                 <h2 className="text-xl font-bold tracking-tight mb-4">Standard 3: Risk Assessment</h2>
-                                <Card className="h-full">
-                                    <CardContent className="pt-6">
-                                        <div className="h-[300px]">
-                                            <RiskAssessmentComponentsChart data={currentViewStats?.assessmentData || []} />
-                                        </div>
-                                        <div className="mt-6 space-y-2">
-                                            <div className="flex justify-between text-sm items-center border-b pb-1">
-                                                <span className="text-muted-foreground">Composite Standard Met</span>
-                                                <span className="font-bold text-emerald-600 dark:text-emerald-400">{currentViewStats?.standard3}%</span>
+                                <div className="flex flex-col gap-4">
+                                    <RiskAssessmentComponentsChart data={currentViewStats?.assessmentData || []} />
+                                    <p className="text-[10px] text-right text-muted-foreground">
+                                        n = {currentViewStats?.clinicianCount} (Patients seen by clinician)
+                                    </p>
+                                    <Card>
+                                        <CardContent>
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between text-sm items-center border-b pb-1">
+                                                    <span className="text-muted-foreground">Composite Standard Met</span>
+                                                    <span className="font-bold text-emerald-600 dark:text-emerald-400">{currentViewStats?.standard3}%</span>
+                                                </div>
+                                                <p className="text-xs text-muted-foreground pt-2">
+                                                    Most commonly missed components: <strong>Reason/Trigger</strong> and <strong>Future Plans</strong>.
+                                                </p>
                                             </div>
-                                            <p className="text-xs text-muted-foreground pt-2">
-                                                Most commonly missed components: <strong>Reason/Trigger</strong> and <strong>Future Plans</strong>.
-                                            </p>
-                                        </div>
-                                    </CardContent>
-                                </Card>
+                                        </CardContent>
+                                    </Card>
+                                </div>
                             </section>
                         </div>
                     </TabsContent>
