@@ -99,7 +99,7 @@ function AuditLanding() {
                     className="flex items-center gap-3"
                 >
                     <Link to="/">
-                        <h1 className="text-xl font-bold tracking-tight text-foreground">Mental Health Quality Improvement Program</h1>
+                        <h1 className="text-xl font-bold tracking-tight text-foreground">Mental Health QIP</h1>
                     </Link>
                 </MotionDiv>
                 <Button variant="ghost" className="pointer-events-auto text-muted-foreground hover:text-foreground" onClick={() => window.history.back()}>Back</Button>
