@@ -25,7 +25,7 @@ export function PinProtection({ open, onOpenChange, onSuccess, title = "Enter PI
 
     // Hardcoded simple PIN for now - in production this could be env var or server check
     // But user asked for "simple PIN auth"
-    const CORRECT_PIN = "0000"; 
+    const CORRECT_PIN = "5555";
 
     const handleSubmit = (e?: React.FormEvent) => {
         e?.preventDefault();

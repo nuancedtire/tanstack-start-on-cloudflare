@@ -19,7 +19,8 @@ import {
     Stethoscope,
     Activity,
     Eye,
-    BrainCircuit
+    BrainCircuit,
+    LogOut
 } from "lucide-react";
 import {
     Select,
@@ -28,13 +29,21 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import { RiskLevel, ObservationStatus, AuditRecord } from "@/lib/schema";
+import { RiskLevel, ObservationStatus, DepartureOutcome, AuditRecord } from "@/lib/schema";
 import { submitAuditFn, updateAuditFn } from "@/server/actions";
 import { MotionDiv, HoverCard } from "@/components/ui/motion";
 import { SmartTimeInput } from "@/components/ui/smart-time-input";
@@ -98,6 +107,7 @@ function SectionHeader({ title, icon: Icon, color, description }: { title: strin
 
 export function AuditForm({ initialData, token, encryptedToken, arrival, onSuccess, mode = "create" }: AuditFormProps) {
     const queryClient = useQueryClient();
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
     // Local state for DOB text input
     const [dobText, setDobText] = useState(initialData?.dateOfBirth ? format(new Date(initialData.dateOfBirth), "dd/MM/yyyy") : "");
@@ -198,6 +208,7 @@ export function AuditForm({ initialData, token, encryptedToken, arrival, onSucce
             clinicianSeenTime: initialData?.clinicianSeenTime,
             psychReferralTime: initialData?.psychReferralTime,
             psychReviewTime: initialData?.psychReviewTime,
+            departureOutcome: initialData?.departureOutcome as DepartureOutcome | undefined,
         },
         onSubmit: async ({ value }) => {
             await submissionHandler(value);
@@ -217,6 +228,7 @@ export function AuditForm({ initialData, token, encryptedToken, arrival, onSucce
                 <Button variant="ghost" size="sm" className="justify-start text-muted-foreground" onClick={() => scrollToSection('identity')}>Identity</Button>
                 <Button variant="ghost" size="sm" className="justify-start text-emerald-600" onClick={() => scrollToSection('alerts')}>ALERTS</Button>
                 <Button variant="ghost" size="sm" className="justify-start text-blue-600" onClick={() => scrollToSection('safety')}>SAFETY</Button>
+                <Button variant="ghost" size="sm" className="justify-start text-purple-600" onClick={() => scrollToSection('departure')}>Departure</Button>
             </div>
 
             <form
@@ -632,6 +644,7 @@ export function AuditForm({ initialData, token, encryptedToken, arrival, onSucce
                                             </div>
                                         </div>
                                     )} />
+
                                 </AcronymCard>
                             </MotionDiv>
                         ) : (
@@ -641,6 +654,74 @@ export function AuditForm({ initialData, token, encryptedToken, arrival, onSucce
                             </div>
                         )
                     )} />
+                </section>
+
+                {/* 4. DEPARTURE OUTCOME - Always visible */}
+                <section id="departure" className="scroll-mt-32">
+                    <SectionHeader title="Departure Outcome" icon={LogOut} color="purple" description="How did the patient leave the department?" />
+                    <HoverCard className="group premium-card border-none ring-1 ring-border shadow-sm">
+                        <CardContent className="pt-6">
+                            <form.Field name="departureOutcome" children={(field) => (
+                                <div className="space-y-4">
+                                    <p className="text-sm text-muted-foreground">
+                                        Record the final departure outcome for this patient. This must be completed for <strong>all</strong> patients, regardless of whether they were seen by a clinician.
+                                    </p>
+                                    <Select 
+                                        onValueChange={(val) => field.handleChange(val as DepartureOutcome)} 
+                                        defaultValue={field.state.value}
+                                    >
+                                        <SelectTrigger className="bg-white dark:bg-black h-12 text-base">
+                                            <SelectValue placeholder="Select departure outcome" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value={DepartureOutcome.SafeDischarge}>
+                                                <span className="flex items-center gap-2">
+                                                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                                    Safe Discharge
+                                                </span>
+                                            </SelectItem>
+                                            <SelectItem value={DepartureOutcome.Admitted}>
+                                                <span className="flex items-center gap-2">
+                                                    <span className="w-2 h-2 rounded-full bg-blue-500" />
+                                                    Admitted to Hospital
+                                                </span>
+                                            </SelectItem>
+                                            <SelectItem value={DepartureOutcome.TransferredPsych}>
+                                                <span className="flex items-center gap-2">
+                                                    <span className="w-2 h-2 rounded-full bg-blue-500" />
+                                                    Transferred to Psychiatric Unit
+                                                </span>
+                                            </SelectItem>
+                                            <SelectItem value={DepartureOutcome.Absconded}>
+                                                <span className="flex items-center gap-2">
+                                                    <span className="w-2 h-2 rounded-full bg-red-500" />
+                                                    Absconded (Left without notification)
+                                                </span>
+                                            </SelectItem>
+                                            <SelectItem value={DepartureOutcome.LAMA}>
+                                                <span className="flex items-center gap-2">
+                                                    <span className="w-2 h-2 rounded-full bg-amber-500" />
+                                                    Left Against Medical Advice
+                                                </span>
+                                            </SelectItem>
+                                            <SelectItem value={DepartureOutcome.Deceased}>
+                                                <span className="flex items-center gap-2">
+                                                    <span className="w-2 h-2 rounded-full bg-slate-800" />
+                                                    Deceased
+                                                </span>
+                                            </SelectItem>
+                                            <SelectItem value={DepartureOutcome.Other}>
+                                                <span className="flex items-center gap-2">
+                                                    <span className="w-2 h-2 rounded-full bg-slate-400" />
+                                                    Other
+                                                </span>
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )} />
+                        </CardContent>
+                    </HoverCard>
                 </section>
 
                 <div className="py-8 border-t border-border">
@@ -656,11 +737,41 @@ export function AuditForm({ initialData, token, encryptedToken, arrival, onSucce
                         <span className="text-xs text-muted-foreground hidden sm:block">
                             Review all sections above before submitting.
                         </span>
-                        <Button type="submit" size="lg" className="bg-green-600 hover:bg-green-700 min-w-[200px] shadow-lg shadow-green-500/20 font-bold text-lg h-12 rounded-full">
+                        <Button 
+                            type="button" 
+                            size="lg" 
+                            className="bg-green-600 hover:bg-green-700 min-w-[200px] shadow-lg shadow-green-500/20 font-bold text-lg h-12 rounded-full"
+                            onClick={() => setShowConfirmDialog(true)}
+                        >
                             <Save className="w-5 h-5 mr-2" /> Complete Audit
                         </Button>
                     </div>
                 </div>
+
+                <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Confirm Audit Submission</DialogTitle>
+                            <DialogDescription>
+                                Are you sure you want to submit this audit? Please ensure all sections have been reviewed and the information is accurate.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter className="gap-2 sm:gap-0">
+                            <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
+                                Cancel
+                            </Button>
+                            <Button 
+                                className="bg-green-600 hover:bg-green-700"
+                                onClick={() => {
+                                    setShowConfirmDialog(false);
+                                    form.handleSubmit();
+                                }}
+                            >
+                                <Save className="w-4 h-4 mr-2" /> Yes, Submit Audit
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </form>
         </div>
     );

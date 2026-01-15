@@ -22,6 +22,16 @@ export enum ObserverRole {
     Other = "Other",
 }
 
+export enum DepartureOutcome {
+    SafeDischarge = "Safe Discharge",
+    Absconded = "Absconded",
+    LAMA = "Left Against Medical Advice",
+    Admitted = "Admitted to Hospital",
+    TransferredPsych = "Transferred to Psychiatric Unit",
+    Deceased = "Deceased",
+    Other = "Other",
+}
+
 export const YesPartialNoEnum = z.enum(["Yes", "Partial", "No"]);
 export type EvaluationStatus = z.infer<typeof YesPartialNoEnum>;
 
@@ -98,6 +108,7 @@ export const AuditRecordSchema = z.object({
 
     // Q1.8 - Departure
     departureTime: z.string().datetime().nullable().optional(),
+    departureOutcome: z.nativeEnum(DepartureOutcome).nullable().optional(),
 
     // Meta
     createdAt: z.string().datetime(),

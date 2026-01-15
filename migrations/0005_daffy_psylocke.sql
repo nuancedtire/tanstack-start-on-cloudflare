@@ -1,0 +1,1 @@
+ALTER TABLE `audits` ADD `departure_outcome` text;

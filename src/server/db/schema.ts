@@ -62,6 +62,7 @@ export const audits = sqliteTable("audits", {
     psychReviewTime: text("psych_review_time"),
     parallelAssessment: integer("parallel_assessment", { mode: "boolean" }).default(false),
     departureTime: text("departure_time"),
+    departureOutcome: text("departure_outcome"), // Safe Discharge, Absconded, LAMA, Admitted, TransferredPsych, Deceased, Other
 
     // Meta
     createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),

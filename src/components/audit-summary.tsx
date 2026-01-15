@@ -2,6 +2,26 @@ import { format, differenceInMinutes } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Clock, CheckCircle2, AlertCircle } from "lucide-react";
 
+import { DepartureOutcome } from "@/lib/schema";
+
+function getDepartureOutcomeStyle(outcome: DepartureOutcome | undefined | null) {
+    if (!outcome) return { className: "text-muted-foreground", label: "Not recorded" };
+    
+    switch (outcome) {
+        case DepartureOutcome.SafeDischarge:
+            return { className: "text-emerald-600 dark:text-emerald-400", label: outcome };
+        case DepartureOutcome.Absconded:
+        case DepartureOutcome.LAMA:
+        case DepartureOutcome.Deceased:
+            return { className: "text-red-600 dark:text-red-400", label: outcome };
+        case DepartureOutcome.Admitted:
+        case DepartureOutcome.TransferredPsych:
+            return { className: "text-blue-600 dark:text-blue-400", label: outcome };
+        default:
+            return { className: "text-muted-foreground", label: outcome };
+    }
+}
+
 function TimeMetric({ label, start, end, target, value }: { label: string, start?: string, end?: string, target?: number, value?: string }) {
     let diff: number | null = null;
     let status = "neutral";
@@ -127,6 +147,12 @@ export function AuditSummary({ values, arrival }: { values: any, arrival: string
                             <span className="text-sm text-muted-foreground">Discharge Plan</span>
                             <span className={cn("text-sm font-medium", values.dischargePlanSafe ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground")}>
                                 {values.dischargePlanSafe ? "Safe" : "Pending"}
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Departure Outcome</span>
+                            <span className={cn("text-sm font-medium", getDepartureOutcomeStyle(values.departureOutcome).className)}>
+                                {getDepartureOutcomeStyle(values.departureOutcome).label}
                             </span>
                         </div>
                     </div>

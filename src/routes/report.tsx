@@ -37,7 +37,7 @@ import {
     RiskAssessmentComponentsChart,
 } from "@/components/chart-components";
 import { cn } from "@/lib/utils";
-import { RiskLevel, ObservationStatus } from "@/lib/schema";
+import { RiskLevel, ObservationStatus, DepartureOutcome } from "@/lib/schema";
 
 export const Route = createFileRoute("/report")({
     component: ReportPage,
@@ -95,7 +95,8 @@ const calculateStats = (data: any[]) => {
         { name: "Psych History", value: clinicianSeen.length ? Math.round((clinicianSeen.filter((a: any) => a.riskAssessmentHistory === "Adequate").length / clinicianSeen.length) * 100) : 0, total: clinicianSeen.length },
     ];
 
-    const absconded = data.filter((a: any) => a.dischargePlanSafe === false).length;
+    const absconded = data.filter((a: any) => a.departureOutcome === DepartureOutcome.Absconded).length;
+    const lama = data.filter((a: any) => a.departureOutcome === DepartureOutcome.LAMA).length;
 
     return {
         total,
@@ -117,7 +118,9 @@ const calculateStats = (data: any[]) => {
         assessmentData,
         riskCount: riskPatients.length,
         clinicianCount: clinicianSeen.length,
-        abscondedRate: Math.round((absconded / (total || 1)) * 100)
+        abscondedCount: absconded,
+        lamaCount: lama,
+        adverseOutcomeRate: Math.round(((absconded + lama) / (total || 1)) * 100)
     };
 };
 

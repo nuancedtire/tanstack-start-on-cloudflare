@@ -62,7 +62,7 @@ function DataView() {
         handleProtectedAction(async () => {
             try {
                 // Hardcoded PIN matches the one in PinProtection component for now
-                const decrypted = await decryptWithPin(encrypted, "0000");
+                const decrypted = await decryptWithPin(encrypted, "5555");
                 setUnlockedMrns(prev => ({ ...prev, [id]: decrypted }));
             } catch (e) {
                 console.error(e);
@@ -213,9 +213,9 @@ function DataView() {
                                                                 <span>{audit.patientToken.substring(0, 8)}...</span>
                                                                 {/* @ts-ignore - Schema update might strictly require rebuild for types */}
                                                                 {audit.patientTokenEncrypted && (
-                                                                    <Button 
-                                                                        variant="ghost" 
-                                                                        size="icon" 
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
                                                                         className="h-6 w-6 text-muted-foreground hover:text-foreground"
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();

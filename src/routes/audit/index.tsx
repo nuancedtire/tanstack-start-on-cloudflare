@@ -59,7 +59,7 @@ function AuditLanding() {
     const handleStartNew = async () => {
         if (!mrn || !arrivalDate) return;
         const token = await hashMRN(mrn);
-        const encrypted = await encryptWithPin(mrn, "0000");
+        const encrypted = await encryptWithPin(mrn, "5555");
 
         // Multi-entry handling: Warning only
         const nearbyRecord = history.find(h => {

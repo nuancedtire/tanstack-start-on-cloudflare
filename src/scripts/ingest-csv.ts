@@ -53,7 +53,7 @@ export async function parseAndSeedFromCsv(csvUrl: string): Promise<any[]> {
 
             const arrivalDate = parseDate(row['arrival-date'], row['arrival-time']);
             const triageTime = parseDate(row['general-triage-time-recorded'] === 'yes-datetime' ? row['general-triage-date'] : "", row['general-triage-time']);
-            
+
             // New Timestamps for Detailed Analysis (Parsed but not strictly required if UI hides them)
             const clinicianSeenTime = parseDate(row['ed-review-time-recorded'] === 'yes-datetime' ? row['ed-review-date'] : "", row['ed-review-time']);
             const psychReferralTime = parseDate(row['psychiatric-referral-time-recorded'] === 'yes-datetime' ? row['psychiatric-referral-date'] : "", row['psychiatric-referral-time']);
@@ -76,11 +76,11 @@ export async function parseAndSeedFromCsv(csvUrl: string): Promise<any[]> {
 
             // Secure Hash for Token
             const token = row['reference'] ? await hashMRN(row['reference']) : 'UNKNOWN';
-            // Also store encrypted token for "unlock" feature (using default PIN 0000)
-            const encryptedToken = row['reference'] ? await encryptWithPin(row['reference'], "0000") : undefined;
+            // Also store encrypted token for "unlock" feature (using default PIN 5555)
+            const encryptedToken = row['reference'] ? await encryptWithPin(row['reference'], "5555") : undefined;
 
             return {
-                patientToken: token, 
+                patientToken: token,
                 patientTokenEncrypted: encryptedToken,
                 arrivalDate: arrivalDate || new Date().toISOString(),
                 triageTime: triageTime,
