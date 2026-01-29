@@ -323,3 +323,50 @@ export function RiskLevelChart({ data }: RiskLevelChartProps) {
         </Card>
     );
 }
+
+interface DepartureOutcomeChartProps {
+    data: Array<{ name: string; count: number; }>;
+}
+
+export function DepartureOutcomeChart({ data }: DepartureOutcomeChartProps) {
+    const getBarColor = (name: string) => {
+        if (name === 'Safe Discharge') return COLORS.low;
+        if (name === 'Admitted to Hospital' || name === 'Transferred to Psychiatric Unit') return '#3b82f6';
+        if (name === 'Absconded' || name === 'Deceased') return COLORS.high;
+        if (name === 'Left Against Medical Advice') return COLORS.medium;
+        return '#94a3b8';
+    };
+
+    return (
+        <Card className="premium-card !px-0">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-purple-500" />
+                    Departure Outcomes
+                </CardTitle>
+                <CardDescription>How patients left the department</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={data} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" horizontal={false} />
+                        <XAxis type="number" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                        <YAxis dataKey="name" type="category" width={180} className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                        <Tooltip
+                            contentStyle={{
+                                backgroundColor: 'hsl(var(--background))',
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: '8px'
+                            }}
+                        />
+                        <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={20}>
+                            {data.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={getBarColor(entry.name)} />
+                            ))}
+                        </Bar>
+                    </BarChart>
+                </ResponsiveContainer>
+            </CardContent>
+        </Card>
+    );
+}

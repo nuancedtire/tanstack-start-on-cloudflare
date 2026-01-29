@@ -9,7 +9,7 @@ import { CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from 
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, differenceInHours, parseISO } from "date-fns";
-import { CalendarIcon, Search, Info, History } from "lucide-react";
+import { CalendarIcon, Search, Info, History, UserCheck, Brain, Ban } from "lucide-react";
 import { MotionDiv, AnimatedContainer, AnimatedItem, HoverCard } from "@/components/ui/motion";
 import { getPatientHistoryFn } from "@/server/actions";
 import { type AuditRecord } from "@/lib/schema";
@@ -89,6 +89,7 @@ function AuditLanding() {
     };
 
 
+
     return (
         <div className="min-h-screen bg-neutral-50 dark:bg-black flex flex-col items-center justify-center p-4 relative overflow-hidden">
             {/* Header Added per Request */}
@@ -109,7 +110,8 @@ function AuditLanding() {
             <div className="absolute inset-0 grid-pattern opacity-30 pointer-events-none" />
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-blue-500 to-indigo-500" />
 
-            <AnimatedContainer className="max-w-xl w-full relative z-10 pt-10" delay={0.1}>
+            {/* Widened container from max-w-xl to max-w-2xl */}
+            <AnimatedContainer className="max-w-2xl w-full relative z-10 pt-10" delay={0.1}>
                 <AnimatedItem className="flex flex-col justify-center items-start space-y-4 mb-6">
                     <div className="flex flex-col-1 gap-4 justify-center items-start">
                         <MotionDiv
@@ -143,6 +145,54 @@ function AuditLanding() {
                         </CardHeader>
 
                         <CardContent className="space-y-6">
+                            {/* Inclusion Criteria Reminder */}
+                            <div className="rounded-xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-900/10 p-4 space-y-3">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+                                    <h3 className="text-sm font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">RCEM Inclusion Criteria</h3>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-3">
+                                    {/* Age 18+ on its own line at the top */}
+                                    <div className="flex items-start gap-3 p-2.5 rounded-lg bg-white/60 dark:bg-black/20 border border-indigo-100/50 dark:border-indigo-800/20">
+                                        <div className="p-1.5 rounded-md bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 shrink-0">
+                                            <UserCheck className="w-4 h-4" />
+                                        </div>
+                                        <div className="space-y-0.5">
+                                            <p className="text-sm font-semibold text-foreground">Age 18+</p>
+                                            <p className="text-xs text-muted-foreground">Patients must be adults</p>
+                                        </div>
+                                    </div>
+
+                                    {/* 2-column grid for Self Harm and Exclusion */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div className="flex items-start gap-3 p-2.5 rounded-lg bg-white/60 dark:bg-black/20 border border-indigo-100/50 dark:border-indigo-800/20">
+                                            <div className="p-1.5 rounded-md bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 shrink-0">
+                                                <Brain className="w-4 h-4" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-semibold text-foreground">Self Harm Presenting</p>
+                                                <p className="text-xs text-muted-foreground leading-snug">
+                                                    Includes deliberate overdose and self-inflicted injuries.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-3 p-2.5 rounded-lg bg-rose-50/80 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30">
+                                            <div className="p-1.5 rounded-md bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 shrink-0">
+                                                <Ban className="w-4 h-4" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-semibold text-rose-700 dark:text-rose-300">Excludes Suicidal Ideation Alone</p>
+                                                <p className="text-xs text-rose-600/80 dark:text-rose-400/70 leading-snug">
+                                                    Do not include patients presenting with ideation without act.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="space-y-2">
                                 <Label htmlFor="mrn" className="text-sm font-semibold text-foreground">Hospital MRN</Label>
                                 <div className="relative">
@@ -297,3 +347,4 @@ function AuditLanding() {
         </div>
     );
 }
+

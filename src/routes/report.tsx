@@ -35,6 +35,10 @@ import {
     TimeRunChart,
     ObservationEvidenceChart,
     RiskAssessmentComponentsChart,
+    SafeguardingComplianceChart,
+    GenderDistributionChart,
+    RiskLevelChart,
+    DepartureOutcomeChart,
 } from "@/components/chart-components";
 import { cn } from "@/lib/utils";
 import { RiskLevel, ObservationStatus, DepartureOutcome } from "@/lib/schema";
@@ -98,6 +102,54 @@ const calculateStats = (data: any[]) => {
     const absconded = data.filter((a: any) => a.departureOutcome === DepartureOutcome.Absconded).length;
     const lama = data.filter((a: any) => a.departureOutcome === DepartureOutcome.LAMA).length;
 
+    // Demographics
+    const genderCounts = data.reduce((acc: any, curr: any) => {
+        const g = curr.gender || 'Not Known';
+        acc[g] = (acc[g] || 0) + 1;
+        return acc;
+    }, {});
+    const genderData = Object.entries(genderCounts).map(([name, value]) => ({ name, value: value as number }));
+
+    // Risk Level Distribution
+    const riskCounts = data.reduce((acc: any, curr: any) => {
+        const r = curr.riskLevel || 'Not Assessed';
+        acc[r] = (acc[r] || 0) + 1;
+        return acc;
+    }, {});
+    const riskLevelData = Object.entries(riskCounts).map(([name, count]) => ({ name, count: count as number }));
+
+    // Departure Outcome Distribution
+    const departureCounts = data.reduce((acc: any, curr: any) => {
+        const d = curr.departureOutcome || 'Not Recorded';
+        acc[d] = (acc[d] || 0) + 1;
+        return acc;
+    }, {});
+    const departureOutcomeData = Object.entries(departureCounts).map(([name, count]) => ({ name, count: count as number }));
+
+    // Safeguarding & Compassion
+    const safeguardingYes = data.filter((a: any) => a.safeguardingCheck).length;
+    const ligatureYes = data.filter((a: any) => a.ligatureCheck).length;
+    
+    const safeguardingData = [
+        { name: 'Safeguarding', value: Math.round((safeguardingYes / (total || 1)) * 100) },
+        { name: 'Ligature', value: Math.round((ligatureYes / (total || 1)) * 100) },
+    ];
+
+    const compCareYes = data.filter((a: any) => a.compassionateCare === 'Yes').length;
+    const compassionateCareRate = Math.round((compCareYes / (total || 1)) * 100);
+
+    // Psych Liaison
+    const referred = data.filter((a: any) => a.referredToPsych);
+    const psychReferralRate = Math.round((referred.length / (total || 1)) * 100);
+    
+    const responseTimes = referred
+        .filter((a: any) => a.psychReferralTime && a.psychReviewTime)
+        .map((a: any) => differenceInMinutes(new Date(a.psychReviewTime), new Date(a.psychReferralTime)));
+    
+    const medianPsychResponse = responseTimes.length > 0
+        ? responseTimes.sort((a: number, b: number) => a - b)[Math.floor(responseTimes.length / 2)]
+        : 0;
+
     return {
         total,
         triagePoints: triageData.map((d, i) => ({
@@ -120,7 +172,14 @@ const calculateStats = (data: any[]) => {
         clinicianCount: clinicianSeen.length,
         abscondedCount: absconded,
         lamaCount: lama,
-        adverseOutcomeRate: Math.round(((absconded + lama) / (total || 1)) * 100)
+        adverseOutcomeRate: Math.round(((absconded + lama) / (total || 1)) * 100),
+        genderData,
+        riskLevelData,
+        departureOutcomeData,
+        safeguardingData,
+        compassionateCareRate,
+        psychReferralRate,
+        medianPsychResponse
     };
 };
 
@@ -398,6 +457,15 @@ function ReportPage() {
                             Viewing data for: <strong className="text-foreground">{dataSource}</strong> (n={currentViewStats?.total || 0})
                         </div>
 
+                        {/* Patient Cohort Demographics */}
+                        <section className="break-inside-avoid">
+                            <h2 className="text-xl font-bold tracking-tight mb-4">Patient Cohort Demographics</h2>
+                            <div className="grid md:grid-cols-2 gap-8">
+                                <RiskLevelChart data={currentViewStats?.riskLevelData || []} />
+                                <GenderDistributionChart data={currentViewStats?.genderData || []} />
+                            </div>
+                        </section>
+
                         {/* Standard 1 */}
                         <section className="break-inside-avoid">
                             <div className="flex items-center justify-between mb-6">
@@ -420,7 +488,6 @@ function ReportPage() {
                                 </div>
                             </div>
 
-                            {/* Outlier Management (Collapsible) */}
                             <div className="mt-4">
                                 <Card className="bg-muted/20 border-dashed">
                                     <CardHeader className="pb-2 py-3 cursor-pointer">
@@ -439,7 +506,7 @@ function ReportPage() {
                                             <table className="w-full text-sm">
                                                 <tbody>
                                                     {(currentViewStats?.triagePoints || [])
-                                                        .slice() // Copy to avoid mutation issues if any, though sort returns same array reference usually
+                                                        .slice()
                                                         .sort((a, b) => b.minutes - a.minutes)
                                                         .slice(0, 5)
                                                         .map((pt) => (
@@ -466,63 +533,181 @@ function ReportPage() {
                             </div>
                         </section>
 
-                        <div className="grid md:grid-cols-2 gap-8 break-inside-avoid">
-                            {/* Standard 2 */}
-                            <section>
-                                <h2 className="text-xl font-bold tracking-tight mb-4">Standard 2: Observation</h2>
-                                <ObservationEvidenceChart data={currentViewStats?.obsData || []} />
-                            </section>
+                        {/* 2-Column Masonry Layout */}
+                        <div className="grid md:grid-cols-2 gap-8 items-start break-inside-avoid">
+                            
+                            {/* LEFT COLUMN */}
+                            <div className="space-y-8">
+                                <section>
+                                    <h2 className="text-xl font-bold tracking-tight mb-4">Standard 2: Observation</h2>
+                                    <ObservationEvidenceChart data={currentViewStats?.obsData || []} />
+                                </section>
 
-                            {/* Standard 3 */}
-                            <section>
-                                <h2 className="text-xl font-bold tracking-tight mb-4">Standard 3: Risk Assessment</h2>
-                                <div className="flex flex-col gap-4">
-                                    <RiskAssessmentComponentsChart data={currentViewStats?.assessmentData || []} />
-                                    <p className="text-[10px] text-right text-muted-foreground">
-                                        n = {currentViewStats?.clinicianCount} (Patients seen by clinician)
-                                    </p>
-                                    <Card>
-                                        <CardContent>
-                                            <div className="space-y-2">
-                                                <div className="flex justify-between text-sm items-center border-b pb-1">
-                                                    <span className="text-muted-foreground">Composite Standard Met</span>
-                                                    <span className="font-bold text-emerald-600 dark:text-emerald-400">{currentViewStats?.standard3}%</span>
+                                <section>
+                                    <h2 className="text-xl font-bold tracking-tight mb-4">Safeguarding & Experience</h2>
+                                    <div className="space-y-6">
+                                        <SafeguardingComplianceChart data={currentViewStats?.safeguardingData || []} />
+                                        <Card className="bg-blue-50/50 border-blue-100 dark:bg-blue-900/10 dark:border-blue-900">
+                                            <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Compassionate Care</CardTitle></CardHeader>
+                                            <CardContent>
+                                                <div className="text-3xl font-bold text-blue-700 dark:text-blue-300">{currentViewStats?.compassionateCareRate}%</div>
+                                                <p className="text-xs text-muted-foreground mt-1">Patients with documented positive engagement</p>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                </section>
+
+                                <section>
+                                    <h2 className="text-xl font-bold tracking-tight mb-4">Departure Outcomes</h2>
+                                    <DepartureOutcomeChart data={currentViewStats?.departureOutcomeData || []} />
+                                    <div className="grid grid-cols-2 gap-4 mt-4">
+                                        <Card className="bg-red-50/50 border-red-100 dark:bg-red-900/10 dark:border-red-900">
+                                            <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-400">Absconded</CardTitle></CardHeader>
+                                            <CardContent><div className="text-2xl font-bold text-red-700 dark:text-red-300">{currentViewStats?.abscondedCount || 0}</div></CardContent>
+                                        </Card>
+                                        <Card className="bg-amber-50/50 border-amber-100 dark:bg-amber-900/10 dark:border-amber-900">
+                                            <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">LAMA</CardTitle></CardHeader>
+                                            <CardContent><div className="text-2xl font-bold text-amber-700 dark:text-amber-300">{currentViewStats?.lamaCount || 0}</div></CardContent>
+                                        </Card>
+                                    </div>
+                                </section>
+                            </div>
+
+                            {/* RIGHT COLUMN */}
+                            <div className="space-y-8">
+                                <section>
+                                    <h2 className="text-xl font-bold tracking-tight mb-4">Standard 3: Risk Assessment</h2>
+                                    <div className="flex flex-col gap-4">
+                                        <RiskAssessmentComponentsChart data={currentViewStats?.assessmentData || []} />
+                                        <p className="text-[10px] text-right text-muted-foreground">
+                                            n = {currentViewStats?.clinicianCount} (Patients seen by clinician)
+                                        </p>
+                                        <Card>
+                                            <CardContent>
+                                                <div className="space-y-2">
+                                                    <div className="flex justify-between text-sm items-center border-b pb-1">
+                                                        <span className="text-muted-foreground">Composite Standard Met</span>
+                                                        <span className="font-bold text-emerald-600 dark:text-emerald-400">{currentViewStats?.standard3}%</span>
+                                                    </div>
+                                                    <p className="text-xs text-muted-foreground pt-2">
+                                                        Most commonly missed: <strong>Trigger</strong> and <strong>Future Plans</strong>.
+                                                    </p>
                                                 </div>
-                                                <p className="text-xs text-muted-foreground pt-2">
-                                                    Most commonly missed components: <strong>Reason/Trigger</strong> and <strong>Future Plans</strong>.
-                                                </p>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                </div>
-                            </section>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                </section>
+
+                                <section>
+                                    <h2 className="text-xl font-bold tracking-tight mb-4">Psych Liaison Efficiency</h2>
+                                    <div className="space-y-6">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <Card>
+                                                <CardHeader className="pb-2"><CardTitle className="text-xs font-medium text-muted-foreground">Referral Rate</CardTitle></CardHeader>
+                                                <CardContent><div className="text-2xl font-bold">{currentViewStats?.psychReferralRate}%</div></CardContent>
+                                            </Card>
+                                            <Card>
+                                                <CardHeader className="pb-2"><CardTitle className="text-xs font-medium text-muted-foreground">Median Response</CardTitle></CardHeader>
+                                                <CardContent>
+                                                    <div className="text-2xl font-bold">{currentViewStats?.medianPsychResponse} <span className="text-sm font-normal text-muted-foreground">min</span></div>
+                                                </CardContent>
+                                            </Card>
+                                        </div>
+                                        <Card className="bg-muted/10">
+                                            <CardHeader>
+                                                <CardTitle className="text-sm">Process Flow</CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <div className="relative border-l border-muted ml-3 pl-6 py-2 space-y-6">
+                                                    <div className="relative">
+                                                        <div className="absolute -left-[29px] w-3 h-3 bg-muted rounded-full border border-background" />
+                                                        <p className="text-sm font-medium">ED Assessment</p>
+                                                        <p className="text-xs text-muted-foreground">Initial triage & risk screen</p>
+                                                    </div>
+                                                    <div className="relative">
+                                                        <div className="absolute -left-[29px] w-3 h-3 bg-blue-500 rounded-full border border-background" />
+                                                        <p className="text-sm font-medium">Psych Referral</p>
+                                                        <p className="text-xs text-muted-foreground">{currentViewStats?.psychReferralRate}% of patients referred</p>
+                                                    </div>
+                                                    <div className="relative">
+                                                        <div className="absolute -left-[29px] w-3 h-3 bg-emerald-500 rounded-full border border-background" />
+                                                        <p className="text-sm font-medium">Specialist Review</p>
+                                                        <p className="text-xs text-muted-foreground">Median wait: {currentViewStats?.medianPsychResponse} mins</p>
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                </section>
+                            </div>
                         </div>
                     </TabsContent>
 
                     {/* == TAB 3: ACTION PLAN == */}
-                    <TabsContent value="plan" className="space-y-6 animate-in fade-in-50">
-                        <h2 className="text-2xl font-bold tracking-tight">Recommendations & Next Steps</h2>
-                        <div className="grid gap-6">
-                            <Card>
-                                <CardHeader><CardTitle>1. Sustain Triage Improvements</CardTitle></CardHeader>
-                                <CardContent>
-                                    <p className="text-sm text-muted-foreground mb-4">The new ALERTS protocol has shown promise.</p>
-                                    <div className="bg-muted p-4 rounded-md text-sm">
-                                        <strong>Action:</strong> Embed the ALERTS poster in all triage bays.<br />
-                                        <strong>Target:</strong> Maintain median triage time &lt;20 mins.
+                    <TabsContent value="plan" className="space-y-8 animate-in fade-in-50">
+                        <div>
+                            <h2 className="text-2xl font-bold tracking-tight mb-2">QIP Interventions & Action Plan</h2>
+                            <p className="text-muted-foreground">The following protocols have been deployed to improve compliance and patient safety.</p>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-8">
+                            <Card className="overflow-hidden flex flex-col h-full">
+                                <div className="aspect-[3/4] w-full bg-muted relative">
+                                    <img 
+                                        src="/alerts.png" 
+                                        alt="ALERTS Triage Protocol" 
+                                        className="absolute inset-0 w-full h-full object-contain bg-white"
+                                    />
+                                </div>
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="flex items-center gap-2">
+                                        <span className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs">1</span>
+                                        ALERTS Protocol
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4 flex-1">
+                                    <p className="text-sm text-muted-foreground">
+                                        Standardised triage assessment tool implemented in all triage bays to ensure consistent risk stratification.
+                                    </p>
+                                    <div className="bg-emerald-50 text-emerald-900 dark:bg-emerald-900/20 dark:text-emerald-200 p-3 rounded-md text-xs font-medium">
+                                        Goal: Reduce triage variation & improve time-to-assessment.
                                     </div>
                                 </CardContent>
                             </Card>
-                            <Card>
-                                <CardHeader><CardTitle>2. Enhance Observation Documentation</CardTitle></CardHeader>
-                                <CardContent>
-                                    <p className="text-sm text-muted-foreground mb-4">Documentation gaps persist for medium risk patients.</p>
-                                    <div className="bg-muted p-4 rounded-md text-sm">
-                                        <strong>Action:</strong> Introduce hourly "Safety Rounds" checklist.<br />
-                                        <strong>Target:</strong> 100% observation documentation for admission &lt; 4 hours.
+
+                            <Card className="overflow-hidden flex flex-col h-full">
+                                <div className="aspect-[3/4] w-full bg-muted relative">
+                                    <img 
+                                        src="/safety.png" 
+                                        alt="SAFETY Risk Assessment" 
+                                        className="absolute inset-0 w-full h-full object-contain bg-white"
+                                    />
+                                </div>
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="flex items-center gap-2">
+                                        <span className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs">2</span>
+                                        SAFETY Checklist
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4 flex-1">
+                                    <p className="text-sm text-muted-foreground">
+                                        Clinician-led risk formulation tool to guide discharge planning and psych liaison referrals.
+                                    </p>
+                                    <div className="bg-blue-50 text-blue-900 dark:bg-blue-900/20 dark:text-blue-200 p-3 rounded-md text-xs font-medium">
+                                        Goal: Increase completion of full risk formulation components.
                                     </div>
                                 </CardContent>
                             </Card>
+                        </div>
+
+                        <div className="mt-8 bg-muted/30 p-6 rounded-lg border border-border/50">
+                            <h3 className="text-lg font-semibold mb-4">Future Recommendations</h3>
+                            <ul className="list-disc pl-5 space-y-2 text-sm text-muted-foreground">
+                                <li><strong>Audit Cycle 3:</strong> Re-audit in 3 months to assess long-term adherence to SAFETY protocol.</li>
+                                <li><strong>Digital Integration:</strong> Explore embedding the ALERTS score directly into the EPR triage screen.</li>
+                                <li><strong>Training:</strong> Run "Safety Huddles" with night staff to address the observation documentation gap.</li>
+                                <li><strong>Departure Tracking:</strong> Monitor absconding and LAMA rates monthly using the new departure outcome field.</li>
+                            </ul>
                         </div>
                     </TabsContent>
                 </Tabs>

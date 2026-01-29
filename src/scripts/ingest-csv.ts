@@ -1,8 +1,25 @@
 
-import { RiskLevel, ObservationStatus } from "@/lib/schema";
+import { RiskLevel, ObservationStatus, DepartureOutcome } from "@/lib/schema";
 import { parse } from "date-fns";
 import { hashMRN } from "@/utils/hash-mrn";
 import { encryptWithPin } from "@/utils/encryption";
+
+function inferDepartureOutcome(row: Record<string, string>): DepartureOutcome | undefined {
+    const edReview = row['ed-clinician-review'];
+    const psychReview = row['psychiatric-review'];
+    const safeDischargePlan = row['safe-discharge-plan'];
+
+    if (edReview === 'did-not-wait' || psychReview === 'did-not-wait') {
+        return DepartureOutcome.Absconded;
+    }
+    if (safeDischargePlan === 'yes') {
+        return DepartureOutcome.SafeDischarge;
+    }
+    if (psychReview === 'yes' && safeDischargePlan !== 'yes') {
+        return DepartureOutcome.TransferredPsych;
+    }
+    return undefined;
+}
 
 export async function parseAndSeedFromCsv(csvUrl: string): Promise<any[]> {
     try {
@@ -106,7 +123,28 @@ export async function parseAndSeedFromCsv(csvUrl: string): Promise<any[]> {
 
                 gender: row['gender'] === '1' ? 'Male' : (row['gender'] === '2' ? 'Female' : 'Not Known'), // Inferring 1=Male, 2=Female based on common coding, check data?
 
-                // Meta
+                // Safeguarding & Environment
+                safeguardingCheck: row['safeguarding-considered'] === 'yes',
+                ligatureCheck: row['ligature-check'] === 'yes',
+                patientDescription: row['patient-description'] === 'yes',
+
+                // Compassionate Care (map good->Yes, minimal->Partial, not-applicable->undefined)
+                compassionateCare: row['compassionate-care'] === 'good' ? 'Yes'
+                    : row['compassionate-care'] === 'minimal' ? 'Partial'
+                    : row['compassionate-care'] === 'not-applicable' ? undefined
+                    : row['compassionate-care'] ? 'No' : undefined,
+
+                // Psych Liaison (fix: use correct column name)
+                referredToPsych: row['psychiatric-referral'] === 'yes',
+
+                // Drug/Alcohol
+                drugAlcoholConsidered: row['drug-alcohol-considered'] === 'yes',
+
+                physicalAssessment: row['physical-assessment'] === 'yes',
+
+                departureOutcome: inferDepartureOutcome(row),
+
+
                 createdAt: new Date().toISOString(), // Ingested now
                 updatedAt: new Date().toISOString()
             };
